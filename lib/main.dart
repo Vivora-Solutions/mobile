@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:book_my_salon/screens/auth/login_screen.dart';
-// import 'package:book_my_salon/screens/home_screen.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:book_my_salon/screens/start_screen.dart';
+// import 'package:mobile/screens/auth/login_screen.dart';
+// import 'package:mobile/screens/home_screen.dart';
+import 'package:mobile/services/auth_service.dart';
+// import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile/screens/start_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  // await dotenv.load(fileName: ".env");
   AuthService();
   runApp(const MyApp());
 }

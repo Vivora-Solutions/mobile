@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:book_my_salon/screens/home_screen.dart';
-import 'package:book_my_salon/services/salon_service.dart';
+import 'package:mobile/screens/home_screen.dart';
+import 'package:mobile/services/salon_service.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final String salonId;

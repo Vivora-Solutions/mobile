@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/services/booking_storage_service.dart';
-import 'package:book_my_salon/screens/home_screen.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart';
-import 'package:book_my_salon/screens/booking_confirmation_screen.dart';
-import 'package:book_my_salon/widgets/custom_button.dart';
-import 'package:book_my_salon/widgets/custom_textfield.dart';
-import 'package:book_my_salon/utils/colors.dart';
-import 'package:book_my_salon/utils/styles.dart';
+import 'package:mobile/services/auth_service.dart';
+import 'package:mobile/services/booking_storage_service.dart';
+import 'package:mobile/screens/home_screen.dart';
+import 'package:mobile/screens/auth/login_screen.dart';
+import 'package:mobile/screens/booking_confirmation_screen.dart';
+import 'package:mobile/widgets/custom_button.dart';
+import 'package:mobile/widgets/custom_textfield.dart';
+import 'package:mobile/utils/colors.dart';
+import 'package:mobile/utils/styles.dart';
 
 class SignupScreen extends StatefulWidget {
   final bool fromBooking; // Flag to indicate if coming from booking flow

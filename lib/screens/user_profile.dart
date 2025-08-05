@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/screens/home_screen.dart';
-import 'package:book_my_salon/screens/current_booking.dart';
+import 'package:mobile/screens/home_screen.dart';
+import 'package:mobile/screens/current_booking.dart';
 
 class UserProfile extends StatefulWidget {
   const UserProfile({Key? key}) : super(key: key);

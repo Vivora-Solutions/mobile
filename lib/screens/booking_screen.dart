@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/services/salon_service.dart';
-import 'package:book_my_salon/screens/booking_confirmation_screen.dart';
+import 'package:mobile/screens/auth/login_screen.dart';
+import 'package:mobile/services/auth_service.dart';
+import 'package:mobile/services/salon_service.dart';
+import 'package:mobile/screens/booking_confirmation_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:book_my_salon/services/booking_storage_service.dart';
+import 'package:mobile/services/booking_storage_service.dart';
 
 class BookingScreen extends StatefulWidget {
   final String salonId;

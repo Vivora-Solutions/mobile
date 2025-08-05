@@ -1,4 +1,4 @@
-# book_my_salon
+# mobile
 
 A new Flutter project.
 

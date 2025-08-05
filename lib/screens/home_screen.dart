@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latLng;
-import 'package:book_my_salon/utils/colors.dart';
-import 'package:book_my_salon/utils/styles.dart';
-import 'package:book_my_salon/widgets/salon_card.dart';
-import 'package:book_my_salon/screens/salon_profile.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/services/salon_service.dart';
+import 'package:mobile/utils/styles.dart';
+import 'package:mobile/widgets/salon_card.dart';
+import 'package:mobile/screens/salon_profile.dart';
+import 'package:mobile/screens/auth/login_screen.dart';
+import 'package:mobile/services/auth_service.dart';
+import 'package:mobile/services/salon_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:book_my_salon/screens/user_profile.dart';
-import 'package:book_my_salon/screens/current_booking.dart';
+import 'package:mobile/screens/user_profile.dart';
+import 'package:mobile/screens/current_booking.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -52,8 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
         SnackBar(
           content: Text(
             'Error loading salons: ${e.toString().replaceAll('Exception: ', '')}',
+            style: const TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
         ),
       );
     }
@@ -82,8 +82,9 @@ class _HomeScreenState extends State<HomeScreen> {
         SnackBar(
           content: Text(
             'Search error: ${e.toString().replaceAll('Exception: ', '')}',
+            style: const TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
         ),
       );
     } finally {
@@ -105,8 +106,9 @@ class _HomeScreenState extends State<HomeScreen> {
         SnackBar(
           content: Text(
             'Logout error: ${e.toString().replaceAll('Exception: ', '')}',
+            style: const TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
         ),
       );
     }
@@ -149,12 +151,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Helper method to get salon location from API data
   latLng.LatLng? _getSalonLocation(Map<String, dynamic> salon) {
-    // Assuming your backend returns location data in a specific format
-    // Adjust this based on your actual API response structure
     if (salon['location'] != null) {
-      // If location is stored as a string like "POINT(lng lat)"
       final locationStr = salon['location'].toString();
       final regex = RegExp(r'POINT\(([^\s]+)\s([^\)]+)\)');
       final match = regex.firstMatch(locationStr);
@@ -166,36 +164,49 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     }
-
-    // Fallback if location parsing fails
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Book My Salon', style: AppStyles.appBarStyle),
-        backgroundColor: AppColors.primaryColor,
-        elevation: 0,
+        title: Text('Book My Salon', style: AppStyles.appBarStyle.copyWith(color: Colors.black)),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.grey[300],
         actions: [
-          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.black),
+            onPressed: _logout,
+          ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Search Field
-                  TextField(
+          ? const Center(child: CircularProgressIndicator(color: Colors.black))
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Search Field
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Search a Salon...',
+                      hintStyle: const TextStyle(color: Colors.grey),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Colors.grey),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Colors.black),
                       ),
                       suffixIcon: _isSearching
                           ? const SizedBox(
@@ -205,6 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 padding: EdgeInsets.all(12.0),
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
+                                  color: Colors.black,
                                 ),
                               ),
                             )
@@ -213,6 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 _searchController.text.isEmpty
                                     ? Icons.search
                                     : Icons.clear,
+                                color: Colors.black,
                               ),
                               onPressed: () {
                                 if (_searchController.text.isNotEmpty) {
@@ -222,8 +235,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                             ),
                     ),
+                    style: const TextStyle(color: Colors.black),
+                    cursorColor: Colors.black,
                     onChanged: (value) {
-                      // Debounce search to avoid too many API calls
                       Future.delayed(const Duration(milliseconds: 500), () {
                         if (_searchController.text == value) {
                           _searchSalons(value);
@@ -231,108 +245,38 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     },
                   ),
-                  const SizedBox(height: 16),
-
-                  // Map
-                  Expanded(
-                    flex: 2,
-                    child: FlutterMap(
-                      options: MapOptions(
-                        center:
-                            _currentLocation ?? latLng.LatLng(6.9271, 79.8612),
-                        zoom: 13.0,
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          subdomains: ['a', 'b', 'c'],
-                          userAgentPackageName: 'com.example.book_my_salon',
-                        ),
-                        MarkerLayer(
-                          markers: [
-                            // Current location marker
-                            if (_currentLocation != null)
-                              Marker(
-                                point: _currentLocation!,
-                                child: const Icon(
-                                  Icons.my_location,
-                                  color: Colors.blue,
-                                  size: 30.0,
-                                ),
-                              ),
-                            // Salon markers
-                            ..._displayedSalons
-                                .map((salon) {
-                                  final salonLocation = _getSalonLocation(
-                                    salon,
-                                  );
-                                  if (salonLocation == null) return null;
-
-                                  return Marker(
-                                    point: salonLocation,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => SalonProfile(
-                                              salonId: salon['salon_id'] ?? '',
-                                              salonName:
-                                                  salon['salon_name'] ??
-                                                  'Unknown Salon',
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: const Icon(
-                                        Icons.location_on,
-                                        color: Colors.red,
-                                        size: 30.0,
-                                      ),
-                                    ),
-                                  );
-                                })
-                                .where((marker) => marker != null)
-                                .cast<Marker>(),
-                          ],
-                        ),
-                      ],
+                ),
+                // Map
+                Expanded(
+                  child: FlutterMap(
+                    options: MapOptions(
+                      center: _currentLocation ?? latLng.LatLng(6.9271, 79.8612),
+                      zoom: 13.0,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Section heading
-                  Text(
-                    _searchController.text.isEmpty
-                        ? 'All Salons'
-                        : 'Search Results (${_displayedSalons.length})',
-                    style: AppStyles.sectionHeadingStyle,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Salon list
-                  Expanded(
-                    flex: 1,
-                    child: _displayedSalons.isEmpty
-                        ? Center(
-                            child: Text(
-                              _searchController.text.isEmpty
-                                  ? 'No salons available'
-                                  : 'No salons found for "${_searchController.text}"',
-                              style: AppStyles.sectionHeadingStyle,
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c'],
+                        userAgentPackageName: 'com.example.mobile',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          if (_currentLocation != null)
+                            Marker(
+                              point: _currentLocation!,
+                              child: const Icon(
+                                Icons.my_location,
+                                color: Colors.black,
+                                size: 30.0,
+                              ),
                             ),
-                          )
-                        : ListView.builder(
-                            itemCount: _displayedSalons.length,
-                            itemBuilder: (context, index) {
-                              final salon = _displayedSalons[index];
-                              return SalonCard(
-                                name: salon['salon_name'] ?? 'Unknown Salon',
-                                address:
-                                    salon['salon_address'] ??
-                                    'Address not available',
-                                // hours: '8:00 am to 10:00 pm', // You can add this field to your backend
+                          ..._displayedSalons.map((salon) {
+                            final salonLocation = _getSalonLocation(salon);
+                            if (salonLocation == null) return null;
+                            return Marker(
+                              point: salonLocation,
+                              child: GestureDetector(
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -340,18 +284,88 @@ class _HomeScreenState extends State<HomeScreen> {
                                       builder: (context) => SalonProfile(
                                         salonId: salon['salon_id'] ?? '',
                                         salonName:
-                                            salon['salon_name'] ??
-                                            'Unknown Salon',
+                                            salon['salon_name'] ?? 'Unknown Salon',
                                       ),
                                     ),
                                   );
                                 },
-                              );
-                            },
-                          ),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.grey,
+                                  size: 30.0,
+                                ),
+                              ),
+                            );
+                          }).where((marker) => marker != null).cast<Marker>(),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                // Nearby Salons Section
+                Container(
+                  height: MediaQuery.of(context).size.height * 0.4, // 40% of screen height
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(color: Colors.grey[300]!),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          _searchController.text.isEmpty
+                              ? 'Nearby Salons'
+                              : 'Search Results (${_displayedSalons.length})',
+                          style: AppStyles.sectionHeadingStyle.copyWith(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: _displayedSalons.isEmpty
+                            ? Center(
+                                child: Text(
+                                  _searchController.text.isEmpty
+                                      ? 'No salons available'
+                                      : 'No salons found for "${_searchController.text}"',
+                                  style: AppStyles.sectionHeadingStyle.copyWith(
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: _displayedSalons.length,
+                                itemBuilder: (context, index) {
+                                  final salon = _displayedSalons[index];
+                                  return SalonCard(
+                                    name: salon['salon_name'] ?? 'Unknown Salon',
+                                    address: salon['salon_address'] ??
+                                        'Address not available',
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => SalonProfile(
+                                            salonId: salon['salon_id'] ?? '',
+                                            salonName:
+                                                salon['salon_name'] ?? 'Unknown Salon',
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
@@ -368,14 +382,13 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Profile',
           ),
         ],
-        currentIndex: 0, // Highlight the Home icon
+        currentIndex: 0,
         selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey[500], // Ash for unselected items
+        unselectedItemColor: Colors.grey[500],
         backgroundColor: Colors.white,
         onTap: (index) {
           switch (index) {
             case 0:
-              // Stay on current page
               break;
             case 1:
               Navigator.pushReplacement(
