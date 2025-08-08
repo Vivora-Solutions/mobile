@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Error loading salons: ${e.toString().replaceAll('Exception: ', '')}',
+            'Salons are not available: ${e.toString().replaceAll('Exception: ', '')}',
             style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.black87,
