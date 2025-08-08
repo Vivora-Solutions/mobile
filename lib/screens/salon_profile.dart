@@ -272,7 +272,7 @@ class _SalonProfileState extends State<SalonProfile> {
                                     color: Colors.grey[900],
                                     child: const Center(
                                       child: Text(
-                                        'Image Error',
+                                        'Image is not loading',
                                         style: TextStyle(color: Colors.white),
                                       ),
                                     ),
