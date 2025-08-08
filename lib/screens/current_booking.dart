@@ -606,7 +606,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
           Icon(Icons.error_outline, size: 64, color: Colors.red),
           SizedBox(height: 16),
           Text(
-            'Error loading bookings',
+            'Bookings are not available',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
