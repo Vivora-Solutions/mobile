@@ -250,7 +250,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text('Error loading stylists: $stylistError'),
+                      Text('Stylists are not available: $stylistError'),
                       SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: _loadStylists,
@@ -382,7 +382,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text('Error loading time slots: $timeSlotsError'),
+                      Text('No availabel time slots: $timeSlotsError'),
                       SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: _loadTimeSlots,
@@ -555,7 +555,7 @@ class _BookingScreenState extends State<BookingScreen> {
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Error storing booking data: $e'),
+                                    content: Text('Booking data can not be added: $e'),
                                     backgroundColor: Colors.red,
                                   ),
                                 );
