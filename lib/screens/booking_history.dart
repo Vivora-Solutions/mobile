@@ -776,7 +776,7 @@ class _BookingHistoryState extends State<BookingHistory> {
           Icon(Icons.error_outline, size: 64, color: Colors.red),
           SizedBox(height: 16),
           Text(
-            'Error loading history',
+            'History is not available',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
