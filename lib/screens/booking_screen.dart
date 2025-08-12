@@ -539,8 +539,8 @@ class _BookingScreenState extends State<BookingScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Please login to complete your booking'),
-                                    backgroundColor: Colors.blue,
                                   ),
+                                  backgroundColor: Colors.blue,
                                 );
 
                                  Navigator.push(
