@@ -382,7 +382,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text('No availabel time slots: $timeSlotsError'),
+                      Text('Error loading time slots'),
                       SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: _loadTimeSlots,
