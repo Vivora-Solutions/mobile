@@ -3,15 +3,15 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latLng;
-import 'package:mobile/utils/styles.dart';
-import 'package:mobile/widgets/salon_card.dart';
-import 'package:mobile/screens/salon_profile.dart';
-import 'package:mobile/screens/auth/login_screen.dart';
-import 'package:mobile/services/auth_service.dart';
-import 'package:mobile/services/salon_service.dart';
+import 'package:book_my_salon/utils/styles.dart';
+import 'package:book_my_salon/widgets/salon_card.dart';
+import 'package:book_my_salon/screens/salon_profile.dart';
+import 'package:book_my_salon/screens/auth/login_screen.dart';
+import 'package:book_my_salon/services/auth_service.dart';
+import 'package:book_my_salon/services/salon_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:mobile/screens/user_profile.dart';
-import 'package:mobile/screens/current_booking.dart';
+import 'package:book_my_salon/screens/user_profile.dart';
+import 'package:book_my_salon/screens/current_booking.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -307,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         urlTemplate:
                             'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                         subdomains: ['a', 'b', 'c'],
-                        userAgentPackageName: 'com.example.mobile',
+                        userAgentPackageName: 'com.example.book_my_salon',
                       ),
                       MarkerLayer(
                         markers: [

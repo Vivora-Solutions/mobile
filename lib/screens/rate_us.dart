@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/screens/home_screen.dart';
+import 'package:book_my_salon/screens/home_screen.dart';
 
 class RateUs extends StatefulWidget {
   const RateUs({Key? key}) : super(key: key);

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mobile/utils/colors.dart';
+import 'package:book_my_salon/utils/colors.dart';
 
 class AppStyles {
   static final TextStyle headingStyle = GoogleFonts.poppins(

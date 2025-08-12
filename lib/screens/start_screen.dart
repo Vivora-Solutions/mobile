@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/screens/home_screen.dart';
-import 'package:mobile/screens/auth/login_screen.dart';
-import 'package:mobile/services/auth_service.dart';
+import 'package:book_my_salon/screens/home_screen.dart';
+import 'package:book_my_salon/screens/auth/login_screen.dart';
+import 'package:book_my_salon/services/auth_service.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
