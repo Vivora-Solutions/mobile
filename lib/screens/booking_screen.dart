@@ -534,14 +534,15 @@ class _BookingScreenState extends State<BookingScreen> {
                                   totalDuration: widget.totalDuration,
                                   totalPrice: widget.totalCost,
                                 );
-
                                 // Show message to user
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Please login to complete your booking'),
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Please login to complete your booking',
                                   ),
                                   backgroundColor: Colors.blue,
-                                );
+                                ),
+                              );
 
                                  Navigator.push(
                                 context,
