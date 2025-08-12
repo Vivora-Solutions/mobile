@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/services/salon_service.dart';
-import 'package:book_my_salon/screens/booking_confirmation_screen.dart';
+import 'package:mobile/screens/auth/login_screen.dart';
+import 'package:mobile/services/auth_service.dart';
+import 'package:mobile/services/salon_service.dart';
+import 'package:mobile/screens/booking_confirmation_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:book_my_salon/services/booking_storage_service.dart';
+import 'package:mobile/services/booking_storage_service.dart';
 
 class BookingScreen extends StatefulWidget {
   final String salonId;
@@ -382,7 +382,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text('Error loading time slots'),
+                      Text('No availabel time slots: $timeSlotsError'),
                       SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: _loadTimeSlots,
@@ -534,30 +534,31 @@ class _BookingScreenState extends State<BookingScreen> {
                                   totalDuration: widget.totalDuration,
                                   totalPrice: widget.totalCost,
                                 );
-                                // Show message to user
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Please login to complete your booking',
-                                  ),
-                                  backgroundColor: Colors.blue,
-                                ),
-                              );
 
-                                 Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      LoginScreen(fromBooking: true),
-                                ),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Error storing booking data: $e',
+                                // Show message to user
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Please login to complete your booking'),
+                                    backgroundColor: Colors.blue,
                                   ),
-                                ));
+                                );
+
+                                // Navigate to login screen
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LoginScreen(
+                                      fromBooking: true, // Flag to indicate this came from booking
+                                    ),
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Booking data can not be added: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
                               }
                             }
                             

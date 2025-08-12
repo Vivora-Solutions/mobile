@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/services/salon_service.dart';
+import 'package:mobile/services/salon_service.dart';
 import 'booking_screen.dart';
 
 class SalonProfile extends StatefulWidget {

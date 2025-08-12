@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:book_my_salon/services/auth_service.dart';
+import 'package:mobile/services/auth_service.dart';
 
 class ReviewService {
   static ReviewService? _instance;
