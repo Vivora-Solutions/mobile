@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latLng;
@@ -42,9 +44,21 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchAllSalons() async {
     try {
       final salons = await _salonService.getAllSalons();
+      final transformedSalons = salons.map((salon) {
+        final location = _getSalonLocation(salon);
+        return {
+          'name': salon['salon_name'] ?? 'Unknown Salon',
+          'latitude': location?.latitude,
+          'longitude': location?.longitude,
+          'address': salon['salon_address'] ?? 'Address not available',
+          'hours': salon['hours'] ?? '8:00 am to 10:00 pm',
+          'salon_id': salon['salon_id'] ?? '', // Ensure salon_id is included
+        };
+      }).toList();
       setState(() {
-        _allSalons = salons;
-        _displayedSalons = salons;
+        _allSalons = transformedSalons;
+        _displayedSalons = transformedSalons;
+        print('Transformed all salons: $_allSalons');
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -74,8 +88,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final searchResults = await _salonService.searchSalonsByName(query);
+      final transformedResults = searchResults.map((salon) {
+        final location = _getSalonLocation(salon);
+        return {
+          'name': salon['salon_name'] ?? 'Unknown Salon',
+          'latitude': location?.latitude,
+          'longitude': location?.longitude,
+          'address': salon['salon_address'] ?? 'Address not available',
+          'hours': salon['hours'] ?? '8:00 am to 10:00 pm',
+          'salon_id': salon['salon_id'] ?? '', // Ensure salon_id is included
+        };
+      }).toList();
       setState(() {
-        _displayedSalons = searchResults;
+        _displayedSalons = transformedResults;
+        print('Transformed search results: $_displayedSalons');
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -154,21 +180,44 @@ class _HomeScreenState extends State<HomeScreen> {
   latLng.LatLng? _getSalonLocation(Map<String, dynamic> salon) {
     if (salon['location'] != null) {
       final locationStr = salon['location'].toString();
-      final regex = RegExp(r'POINT\(([^\s]+)\s([^\)]+)\)');
-      final match = regex.firstMatch(locationStr);
-      if (match != null) {
-        final lng = double.tryParse(match.group(1) ?? '');
-        final lat = double.tryParse(match.group(2) ?? '');
-        if (lng != null && lat != null) {
-          return latLng.LatLng(lat, lng);
+      final bytes = hexToBytes(locationStr);
+      if (bytes.length >= 21) { // 1 byte order + 4 bytes type + 4 bytes SRID + 16 bytes coordinates
+        final byteData = ByteData.view(Uint8List.fromList(bytes).buffer);
+        final byteOrder = bytes[0]; // 1 = little-endian, 0 = big-endian
+        Endian endian = byteOrder == 1 ? Endian.little : Endian.big;
+        final type = byteData.getUint32(1, endian);
+        int coordOffset = 9; // Skip byte order, type (4 bytes), and SRID (4 bytes)
+        if (type & 0x20000000 == 0x20000000) { // Has SRID
+          // coordOffset is already 9, no change needed
         }
+        final lon = byteData.getFloat64(coordOffset, endian);
+        final lat = byteData.getFloat64(coordOffset + 8, endian);
+        return latLng.LatLng(lat, lon);
       }
     }
     return null;
   }
 
+  List<int> hexToBytes(String hex) {
+    hex = hex.replaceAll(' ', '');
+    List<int> bytes = [];
+    for (int i = 0; i < hex.length; i += 2) {
+      bytes.add(int.parse(hex.substring(i, i + 2), radix: 16));
+    }
+    return bytes;
+  }
+
+  void _displaySalonsOnMap() {
+    // New function using the second methodology to display salons on the map
+    // Directly using latitude and longitude from _displayedSalons
+    setState(() {
+      // No state change needed here, just ensuring the map updates
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    _displaySalonsOnMap(); // Call the new function to update map markers
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -272,30 +321,30 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ..._displayedSalons.map((salon) {
-                            final salonLocation = _getSalonLocation(salon);
-                            if (salonLocation == null) return null;
-                            return Marker(
-                              point: salonLocation,
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => SalonProfile(
-                                        salonId: salon['salon_id'] ?? '',
-                                        salonName:
-                                            salon['salon_name'] ?? 'Unknown Salon',
+                            if (salon['latitude'] != null && salon['longitude'] != null) {
+                              return Marker(
+                                point: latLng.LatLng(salon['latitude'], salon['longitude']),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => SalonProfile(
+                                          salonId: salon['salon_id'] ?? '',
+                                          salonName: salon['name'] ?? 'Unknown Salon',
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                                child: const Icon(
-                                  Icons.location_on,
-                                  color: Colors.grey,
-                                  size: 30.0,
+                                    );
+                                  },
+                                  child: const Icon(
+                                    Icons.location_on,
+                                    color: Color.fromARGB(255, 255, 0, 0),
+                                    size: 30.0,
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            }
+                            return null;
                           }).where((marker) => marker != null).cast<Marker>(),
                         ],
                       ),
@@ -343,17 +392,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                 itemBuilder: (context, index) {
                                   final salon = _displayedSalons[index];
                                   return SalonCard(
-                                    name: salon['salon_name'] ?? 'Unknown Salon',
-                                    address: salon['salon_address'] ??
-                                        'Address not available',
+                                    name: salon['name'] ?? 'Unknown Salon',
+                                    address: salon['address'] ?? 'Address not available',
                                     onTap: () {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => SalonProfile(
                                             salonId: salon['salon_id'] ?? '',
-                                            salonName:
-                                                salon['salon_name'] ?? 'Unknown Salon',
+                                            salonName: salon['name'] ?? 'Unknown Salon',
                                           ),
                                         ),
                                       );
