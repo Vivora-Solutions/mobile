@@ -543,22 +543,20 @@ class _BookingScreenState extends State<BookingScreen> {
                                   ),
                                 );
 
-                                // Navigate to login screen
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => LoginScreen(
-                                      fromBooking: true, // Flag to indicate this came from booking
-                                    ),
+                                 Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      LoginScreen(fromBooking: true),
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Error storing booking data: $e',
                                   ),
-                                );
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Booking data can not be added: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
+                                ));
                               }
                             }
                             
