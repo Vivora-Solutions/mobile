@@ -21,7 +21,7 @@ class SalonCard extends StatelessWidget {
         leading: CircleAvatar(
           // Replace with a local asset or remove NetworkImage
           backgroundImage: const AssetImage(
-            'components/images/placeholder.png',
+            'images/placeholder.png',
           ),
           // Replace with a local asset or remove NetworkImage
           child: Icon(Icons.store, color: Colors.grey),
