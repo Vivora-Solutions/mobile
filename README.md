@@ -37,8 +37,6 @@ A Flutter-based mobile application that allows users to discover, book, and mana
 - **Maps**: flutter_map with OpenStreetMap
 - **Location Services**: geolocator
 - **HTTP Client**: Built-in Dart HTTP
-- **Authentication**: Custom auth service
-- **Storage**: Local storage for booking data
 
 ## Project Structure
 
@@ -108,7 +106,7 @@ lib/
 ## Configuration
 
 ### API Configuration
-Update the API constants in `lib/config/api_constants.dart`:
+Update the API constants in `lib/config/api_constants.dart` with the backend URL:
 ```dart
 class ApiConstants {
   static const String baseUrl = 'your-api-base-url';
