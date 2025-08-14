@@ -232,4 +232,3 @@ For support and questions:
 
 - OpenStreetMap for map tiles
 - Flutter community for excellent packages
-- Contributors and testers
