@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       label: const Text('Continue with Google'),
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.black,
-                        backgroundColor: Colors.white,
+                        backgroundColor: const Color.fromARGB(255, 183, 183, 183),
                         side: const BorderSide(color: Colors.grey),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
