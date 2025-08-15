@@ -21,16 +21,16 @@ class _HomeScreenState extends State<HomeScreen> {
   latLng.LatLng? _currentLocation;
   bool _isLoading = true;
   bool _isSearching = false;
+  bool _isSalonSectionExpanded = false; // Add state for expansion
 
   List<Map<String, dynamic>> _allSalons = [];
   List<Map<String, dynamic>> _displayedSalons = [];
-  List<Map<String, dynamic>> _nearbySalons =
-      []; // Add this for location-based salons
+  List<Map<String, dynamic>> _nearbySalons = [];
 
   final TextEditingController _searchController = TextEditingController();
   final SalonService _salonService = SalonService();
 
-  bool _useLocationBasedSearch = true; // Add this flag
+  bool _useLocationBasedSearch = true;
 
   @override
   void initState() {
@@ -43,16 +43,14 @@ class _HomeScreenState extends State<HomeScreen> {
     await _fetchSalons();
   }
 
-  // Updated method to fetch salons based on location
   Future<void> _fetchSalons() async {
     try {
       List<Map<String, dynamic>> salons;
       if (_useLocationBasedSearch && _currentLocation != null) {
-        // Fetch salons near current location
         salons = await _salonService.getSalonsByLocation(
           latitude: _currentLocation!.latitude,
           longitude: _currentLocation!.longitude,
-          radiusMeters: 10000, // 10km radius
+          radiusMeters: 10000,
         );
 
         print(
@@ -63,15 +61,13 @@ class _HomeScreenState extends State<HomeScreen> {
           _nearbySalons = salons;
         });
       } else {
-        // Fallback to all salons
         salons = await _salonService.getAllSalons();
       }
 
-      // Transform salons to include parsed coordinates
       final transformedSalons = salons.map((salon) {
         final location = _getSalonLocation(salon);
         return {
-          ...salon, // Keep all original data
+          ...salon,
           'latitude': location?.latitude,
           'longitude': location?.longitude,
         };
@@ -83,7 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
         print('Transformed salons: $_allSalons');
       });
     } catch (e) {
-      // If location-based search fails, try getting all salons
       if (_useLocationBasedSearch) {
         try {
           final allSalons = await _salonService.getAllSalons();
@@ -98,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _allSalons = transformedSalons;
             _displayedSalons = transformedSalons;
-            _useLocationBasedSearch = false; // Disable location-based search
+            _useLocationBasedSearch = false;
           });
         } catch (fallbackError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -123,10 +118,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Updated method to get salon location from API data using temp_home logic
   latLng.LatLng? _getSalonLocation(Map<String, dynamic> salon) {
     try {
-      // Check if the salon data includes parsed latitude and longitude first
       if (salon['latitude'] != null && salon['longitude'] != null) {
         final lat = double.tryParse(salon['latitude'].toString());
         final lng = double.tryParse(salon['longitude'].toString());
@@ -135,9 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
 
-      // Check if distance is provided (from location-based search)
       if (salon['distance'] != null) {
-        // These coordinates should be included in the nearby search response
         final lat = double.tryParse(salon['lat']?.toString() ?? '');
         final lng = double.tryParse(salon['lng']?.toString() ?? '');
         if (lat != null && lng != null) {
@@ -145,25 +136,23 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
 
-      // Use temp_home logic for hex decoding
       if (salon['location'] != null) {
         final locationStr = salon['location'].toString();
         final bytes = hexToBytes(locationStr);
-        if (bytes.length >= 21) { // 1 byte order + 4 bytes type + 4 bytes SRID + 16 bytes coordinates
+        if (bytes.length >= 21) {
           final byteData = ByteData.view(Uint8List.fromList(bytes).buffer);
-          final byteOrder = bytes[0]; // 1 = little-endian, 0 = big-endian
+          final byteOrder = bytes[0];
           Endian endian = byteOrder == 1 ? Endian.little : Endian.big;
           final type = byteData.getUint32(1, endian);
-          int coordOffset = 9; // Skip byte order, type (4 bytes), and SRID (4 bytes)
-          if (type & 0x20000000 == 0x20000000) { // Has SRID
-            // coordOffset is already 9, no change needed
+          int coordOffset = 9;
+          if (type & 0x20000000 == 0x20000000) {
+            coordOffset = 9;
           }
           final lon = byteData.getFloat64(coordOffset, endian);
           final lat = byteData.getFloat64(coordOffset + 8, endian);
           return latLng.LatLng(lat, lon);
         }
 
-        // Fallback: try to parse PostgreSQL geography format (if needed)
         final pointRegex = RegExp(r'POINT\(([^\s]+)\s([^\)]+)\)');
         final pointMatch = pointRegex.firstMatch(locationStr);
         if (pointMatch != null) {
@@ -182,7 +171,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Add hexToBytes function from temp_home
   List<int> hexToBytes(String hex) {
     hex = hex.replaceAll(' ', '');
     List<int> bytes = [];
@@ -192,7 +180,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return bytes;
   }
 
-  // Add method to refresh salons when location changes
   Future<void> _refreshSalonsForLocation() async {
     if (_currentLocation != null) {
       setState(() {
@@ -205,7 +192,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Updated location fetching to refresh salons when location is obtained
   Future<void> _fetchInitialLocation() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
@@ -229,7 +215,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoading = false;
       });
 
-      // Refresh salons after getting location
       if (_currentLocation != null) {
         await _fetchSalons();
       }
@@ -241,45 +226,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // // FOR TESTING: Manually set location near the salon
-  // Future<void> _fetchInitialLocation() async {
-  //   try {
-  //     // FOR TESTING: Manually set location near the salon
-  //     // Remove this and uncomment the real location code when done testing
-  //     setState(() {
-  //       // Set location near the salon coordinate you provided
-  //       _currentLocation = latLng.LatLng(
-  //         6.97,
-  //         79.91,
-  //       ); // Decoded from your hex string
-  //       _isLoading = false;
-  //     });
-
-  //     // Refresh salons after setting location
-  //     if (_currentLocation != null) {
-  //       await _fetchSalons();
-  //     }
-  //     return; // Remove this return when you want to use real location
-  //   } catch (e) {
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //     _handleLocationError();
-  //   }
-  // }
-
   void _handleLocationError() {
     setState(() {
-      _currentLocation = latLng.LatLng(6.9271, 79.8612); // Default to Colombo
-      _useLocationBasedSearch = false; // Disable location-based search
+      _currentLocation = latLng.LatLng(6.9271, 79.8612);
+      _useLocationBasedSearch = false;
       _isLoading = false;
     });
 
-    // Fetch all salons as fallback
     _fetchSalons();
   }
 
-  // Add method to handle map marker taps
   void _onSalonMarkerTapped(Map<String, dynamic> salon) {
     Navigator.push(
       context,
@@ -292,7 +248,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Updated search method to handle both nearby and all salons
   Future<void> _searchSalons(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -308,7 +263,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final searchResults = await _salonService.searchSalonsByName(query);
-      // Transform search results too
       final transformedResults = searchResults.map((salon) {
         final location = _getSalonLocation(salon);
         return {
@@ -418,7 +372,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                     ),
                     onChanged: (value) {
-                      // Debounce search to avoid too many API calls
                       Future.delayed(const Duration(milliseconds: 500), () {
                         if (_searchController.text == value) {
                           _searchSalons(value);
@@ -459,95 +412,115 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (_useLocationBasedSearch && _currentLocation != null)
                     const SizedBox(height: 16),
 
-                  // Map
-                  Expanded(
-                    flex: 2,
-                    child: FlutterMap(
-                      options: MapOptions(
-                        initialCenter:
-                            _currentLocation ?? latLng.LatLng(6.9271, 79.8612),
-                        initialZoom: _useLocationBasedSearch ? 14.0 : 13.0,
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          subdomains: ['a', 'b', 'c'],
-                          userAgentPackageName: 'com.example.book_my_salon',
+                  // Map (hidden when salon section is expanded)
+                  if (!_isSalonSectionExpanded)
+                    Expanded(
+                      flex: 2,
+                      child: FlutterMap(
+                        options: MapOptions(
+                          initialCenter:
+                              _currentLocation ?? latLng.LatLng(6.9271, 79.8612),
+                          initialZoom: _useLocationBasedSearch ? 14.0 : 13.0,
                         ),
-                        MarkerLayer(
-                          markers: [
-                            // Current location marker
-                            if (_currentLocation != null)
-                              Marker(
-                                point: _currentLocation!,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 2,
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            subdomains: ['a', 'b', 'c'],
+                            userAgentPackageName: 'com.example.book_my_salon',
+                          ),
+                          MarkerLayer(
+                            markers: [
+                              if (_currentLocation != null)
+                                Marker(
+                                  point: _currentLocation!,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
                                     ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.my_location,
-                                    color: Colors.white,
-                                    size: 20.0,
+                                    child: const Icon(
+                                      Icons.my_location,
+                                      color: Colors.white,
+                                      size: 20.0,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            // Salon markers using transformed data
-                            ..._displayedSalons.map((salon) {
-                              if (salon['latitude'] != null && salon['longitude'] != null) {
-                                return Marker(
-                                  point: latLng.LatLng(salon['latitude'], salon['longitude']),
-                                  child: GestureDetector(
-                                    onTap: () => _onSalonMarkerTapped(salon),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
+                              ..._displayedSalons.map((salon) {
+                                if (salon['latitude'] != null && salon['longitude'] != null) {
+                                  return Marker(
+                                    point: latLng.LatLng(salon['latitude'], salon['longitude']),
+                                    child: GestureDetector(
+                                      onTap: () => _onSalonMarkerTapped(salon),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.store,
                                           color: Colors.white,
-                                          width: 2,
+                                          size: 20.0,
                                         ),
                                       ),
-                                      child: const Icon(
-                                        Icons.store,
-                                        color: Colors.white,
-                                        size: 20.0,
-                                      ),
                                     ),
-                                  ),
-                                );
-                              }
-                              return null;
-                            }).where((marker) => marker != null).cast<Marker>(),
-                          ],
-                        ),
-                      ],
+                                  );
+                                }
+                                return null;
+                              }).where((marker) => marker != null).cast<Marker>(),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                  if (!_isSalonSectionExpanded) const SizedBox(height: 16),
 
-                  // Section heading with distance info
+                  // Section heading with arrow icon
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        _searchController.text.isEmpty
-                            ? (_useLocationBasedSearch
-                                  ? 'Nearby Salons'
-                                  : 'All Salons')
-                            : 'Search Results (${_displayedSalons.length})',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            _searchController.text.isEmpty
+                                ? (_useLocationBasedSearch
+                                    ? 'Nearby Salons'
+                                    : 'All Salons')
+                                : 'Search Results (${_displayedSalons.length})',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (!_useLocationBasedSearch && _searchController.text.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: IconButton(
+                                icon: Icon(
+                                  _isSalonSectionExpanded
+                                      ? Icons.keyboard_arrow_down
+                                      : Icons.keyboard_arrow_up,
+                                  size: 24,
+                                  color: Colors.black,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isSalonSectionExpanded = !_isSalonSectionExpanded;
+                                  });
+                                },
+                              ),
+                            ),
+                        ],
                       ),
-                      if (_useLocationBasedSearch &&
-                          _displayedSalons.isNotEmpty)
+                      if (_useLocationBasedSearch && _displayedSalons.isNotEmpty)
                         Text(
                           '${_displayedSalons.length} found',
                           style: TextStyle(
@@ -559,9 +532,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Salon list with distance
+                  // Salon list
                   Expanded(
-                    flex: 1,
+                    flex: _isSalonSectionExpanded ? 3 : 1,
                     child: _displayedSalons.isEmpty
                         ? Center(
                             child: Column(
@@ -612,21 +585,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                     child: salon['salon_logo_link'] != null
                                         ? ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
+                                            borderRadius: BorderRadius.circular(8),
                                             child: Image.network(
                                               salon['salon_logo_link'],
                                               fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) => Icon(
-                                                    Icons.store,
-                                                    color: Colors.grey[600],
-                                                  ),
+                                              errorBuilder: (
+                                                context,
+                                                error,
+                                                stackTrace,
+                                              ) => Icon(
+                                                Icons.store,
+                                                color: Colors.grey[600],
+                                              ),
                                             ),
                                           )
                                         : Icon(
@@ -642,12 +612,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                   subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        salon['salon_address'] ??
-                                            'Address not available',
+                                        salon['salon_address'] ?? 'Address not available',
                                         style: TextStyle(fontSize: 14),
                                       ),
                                       if (distance != null) ...[
@@ -719,7 +687,6 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: (index) {
           switch (index) {
             case 0:
-              // Stay on current page
               break;
             case 1:
               Navigator.pushReplacement(
