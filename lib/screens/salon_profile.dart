@@ -344,7 +344,7 @@ class _SalonProfileState extends State<SalonProfile> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                   Text(
-                    "${(totalDuration / 60).toStringAsFixed(1)} hours",
+                    "${totalDuration ~/ 60} hours ${totalDuration % 60} min",
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
