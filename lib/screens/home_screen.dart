@@ -247,8 +247,31 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
   Future<void> _searchSalons(String query) async {
+  if (query.isEmpty) {
+    setState(() {
+      _displayedSalons = _allSalons;
+      _isSearching = false;
+    });
+    return;
+  }
+
+  setState(() {
+    _isSearching = true;
+  });
+
+  // Filter from _allSalons directly (case-insensitive)
+  final filteredResults = _allSalons.where((salon) {
+    final salonName = (salon['salon_name'] ?? '').toString().toLowerCase();
+    return salonName.contains(query.toLowerCase());
+  }).toList();
+
+  setState(() {
+    _displayedSalons = filteredResults;
+    _isSearching = false;
+  });
+}
+  /*Future<void> _searchSalons(String query) async {
     if (query.isEmpty) {
       setState(() {
         _displayedSalons = _allSalons;
@@ -289,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _isSearching = false;
       });
     }
-  }
+  }*/
 
   Future<void> _logout() async {
     try {

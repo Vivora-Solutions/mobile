@@ -222,7 +222,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         border: Border.all(color: Colors.green[200]!),
                       ),
                       child: Text(
-                        'Total: Rs ${widget.totalCost} • ${(widget.totalDuration / 60).toStringAsFixed(1)} hours',
+                        'Total: Rs ${widget.totalCost} • ${widget.totalDuration ~/ 60} hours ${widget.totalDuration % 60} min',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.green[700],
