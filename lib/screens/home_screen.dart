@@ -271,48 +271,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _isSearching = false;
   });
 }
-  /*Future<void> _searchSalons(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _displayedSalons = _allSalons;
-        _isSearching = false;
-      });
-      return;
-    }
-
-    setState(() {
-      _isSearching = true;
-    });
-
-    try {
-      final searchResults = await _salonService.searchSalonsByName(query);
-      final transformedResults = searchResults.map((salon) {
-        final location = _getSalonLocation(salon);
-        return {
-          ...salon,
-          'latitude': location?.latitude,
-          'longitude': location?.longitude,
-        };
-      }).toList();
-      setState(() {
-        _displayedSalons = transformedResults;
-        print('Transformed search results: $_displayedSalons');
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Search error: ${e.toString().replaceAll('Exception: ', '')}',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        _isSearching = false;
-      });
-    }
-  }*/
 
   Future<void> _logout() async {
     try {
@@ -351,6 +309,35 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.refresh, color: Colors.black),
             onPressed: _refreshSalonsForLocation,
+          ),
+          IconButton(
+            icon: Icon(Icons.logout, color: Colors.black),
+            onPressed: () async {
+              // Show confirmation dialog
+              final shouldLogout = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Logout'),
+                    content: Text('Are you sure you want to logout?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: Text('Logout'),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (shouldLogout == true) {
+                _logout();
+              }
+            },
           ),
         ],
       ),
