@@ -180,8 +180,9 @@ class AuthService {
 
   // Check if user is logged in
   Future<bool> isLoggedIn() async {
-    final token = await getAccessToken();
-    return token != null;
+    // final token = await getAccessToken();
+    // return token != null;
+    return false;
   }
 
   // Refresh access token (now uses cookies automatically)
