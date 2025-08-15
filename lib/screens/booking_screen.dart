@@ -33,7 +33,7 @@ class _BookingScreenState extends State<BookingScreen> {
   String? selectedStylistId;
   String selectedStylistName = 'None Selected';
   DateTime? selectedDate;
-  List<Map<String, dynamic>> selectedTimeSlots = [];
+  Map<String, dynamic>? selectedTimeSlot;
   bool isConfirmed = false;
   bool isLoadingStylists = true;
   bool isLoadingTimeSlots = false;
@@ -91,7 +91,8 @@ class _BookingScreenState extends State<BookingScreen> {
         isLoadingTimeSlots = true;
         timeSlotsError = null;
         availableTimeSlots = [];
-        selectedTimeSlots = [];
+        // Clear selected time slot when loading new slots
+        selectedTimeSlot = null;
       });
 
       // Extract service IDs from selected services
@@ -310,8 +311,10 @@ class _BookingScreenState extends State<BookingScreen> {
                       setState(() {
                         selectedDate = selectedDay;
                         _focusedDay = focusedDay;
-                        selectedTimeSlots
-                            .clear(); // Clear time slots when date changes
+                        if (selectedTimeSlot != null) {
+                          selectedTimeSlot?.clear(); 
+                        }
+
                       });
 
                       // Load time slots if both stylist and date are selected
@@ -424,15 +427,18 @@ class _BookingScreenState extends State<BookingScreen> {
                   itemBuilder: (context, index) {
                     final timeSlot = availableTimeSlots[index];
                     final timeDisplay = _formatTimeSlot(timeSlot);
-                    final isSelected = selectedTimeSlots.contains(timeSlot);
+                    // Check if this specific slot is selected
+                    final isSelected = selectedTimeSlot == timeSlot;
 
                     return ElevatedButton(
                       onPressed: () {
                         setState(() {
+                          // Toggle selection - if same slot clicked, deselect it
                           if (isSelected) {
-                            selectedTimeSlots.remove(timeSlot);
+                            selectedTimeSlot = null;
                           } else {
-                            selectedTimeSlots.add(timeSlot);
+                            // Select this slot (replacing any previous selection)
+                            selectedTimeSlot = timeSlot;
                           }
                         });
                       },
@@ -453,7 +459,7 @@ class _BookingScreenState extends State<BookingScreen> {
               SizedBox(height: 24),
 
               // Booking Details Section
-              if (selectedTimeSlots.isNotEmpty)
+              if (selectedTimeSlot != null)
                 // Container(
                 //   width: double.infinity,
                 //   padding: EdgeInsets.all(16),
@@ -487,7 +493,7 @@ class _BookingScreenState extends State<BookingScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: selectedTimeSlots.isNotEmpty && !isConfirmed
+                  onPressed: selectedTimeSlot != null && !isConfirmed
                       ? () async {
                           setState(() {
                             isConfirmed = true;
@@ -498,7 +504,7 @@ class _BookingScreenState extends State<BookingScreen> {
                             listen: false,
                           );
                           final isLoggedIn = await authService.isLoggedIn();
-                          // print('User logged in: $isLoggedIn');
+
                           if (isLoggedIn) {
                             // User is logged in, proceed directly to confirmation
                             Navigator.push(
@@ -516,16 +522,17 @@ class _BookingScreenState extends State<BookingScreen> {
                                   date: selectedDate!,
                                   time: TimeOfDay(
                                     hour: DateTime.parse(
-                                      selectedTimeSlots.first['start'],
+                                      selectedTimeSlot!['start'],
                                     ).hour,
                                     minute: DateTime.parse(
-                                      selectedTimeSlots.first['start'],
+                                      selectedTimeSlot!['start'],
                                     ).minute,
                                   ),
                                   selectedEmployee: selectedStylistName,
-                                  selectedTimeSlots: selectedTimeSlots
-                                      .map((slot) => _formatTimeSlot(slot))
-                                      .toList(),
+                                  // Pass single time slot as list for compatibility
+                                  selectedTimeSlots: [
+                                    _formatTimeSlot(selectedTimeSlot!),
+                                  ],
                                   totalDuration: widget.totalDuration,
                                   totalPrice: widget.totalCost,
                                 ),
@@ -541,7 +548,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                 stylistName: selectedStylistName,
                                 selectedServices: widget.selectedServices,
                                 date: selectedDate!,
-                                timeSlot: selectedTimeSlots.first,
+                                timeSlot: selectedTimeSlot!,
                                 totalDuration: widget.totalDuration,
                                 totalPrice: widget.totalCost,
                               );
@@ -567,9 +574,7 @@ class _BookingScreenState extends State<BookingScreen> {
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(
-                                    'Error storing booking data',
-                                  ),
+                                  content: Text('Error storing booking data'),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -590,7 +595,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                   ),
                   child: Text(
-                    selectedTimeSlots.isEmpty
+                    selectedTimeSlot == null
                         ? 'Select Time Slot to Continue'
                         : 'Proceed to Confirmation',
                     style: TextStyle(
@@ -628,7 +633,8 @@ class _BookingScreenState extends State<BookingScreen> {
         setState(() {
           selectedStylistId = stylistId;
           selectedStylistName = name;
-          selectedTimeSlots.clear(); // Clear time slots when changing stylist
+          // Clear selected time slot when changing stylist
+          selectedTimeSlot = null;
         });
 
         // Load time slots if both stylist and date are selected

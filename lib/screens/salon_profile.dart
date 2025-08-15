@@ -21,23 +21,18 @@ class _SalonProfileState extends State<SalonProfile> {
   Map<String, dynamic>? salonData;
   List<Map<String, dynamic>> allServices = [];
   List<Map<String, dynamic>> filteredServices = [];
-  Map<String, bool> selectedServices = {};
+  // Change to store service objects instead of just names
+  Map<String, Map<String, dynamic>> selectedServices = {};
   bool isLoading = true;
   String? error;
   String selectedCategory = 'All';
 
-  int get totalCost => selectedServices.entries
-      .where((e) => e.value)
-      .map(
-        (e) => filteredServices.firstWhere((s) => s['service_name'] == e.key)['price'] as int,
-      )
+  int get totalCost => selectedServices.values
+      .map((service) => service['price'] as int)
       .fold(0, (a, b) => a + b);
 
-  int get totalDuration => selectedServices.entries
-      .where((e) => e.value)
-      .map(
-        (e) => filteredServices.firstWhere((s) => s['service_name'] == e.key)['duration_minutes'] as int,
-      )
+  int get totalDuration => selectedServices.values
+      .map((service) => service['duration_minutes'] as int)
       .fold(0, (a, b) => a + b);
 
   @override
@@ -67,7 +62,6 @@ class _SalonProfileState extends State<SalonProfile> {
         salonData = results[0] as Map<String, dynamic>;
         allServices = results[1] as List<Map<String, dynamic>>;
         filteredServices = List.from(allServices);
-        _initializeSelectedServices();
         isLoading = false;
       });
     } catch (e) {
@@ -76,12 +70,6 @@ class _SalonProfileState extends State<SalonProfile> {
         isLoading = false;
       });
     }
-  }
-
-  void _initializeSelectedServices() {
-    selectedServices = {
-      for (var service in filteredServices) service['service_name'] as String: false,
-    };
   }
 
   void _updateServices(String category) {
@@ -113,8 +101,28 @@ class _SalonProfileState extends State<SalonProfile> {
             .where((service) => service['service_category']?.toString().toLowerCase() == categoryFilter)
             .toList();
       }
+      // No need to reinitialize selectedServices - they persist across filter changes
+    });
+  }
 
-      _initializeSelectedServices();
+  // Helper method to check if a service is selected
+  bool _isServiceSelected(Map<String, dynamic> service) {
+    final serviceName = service['service_name'] as String;
+    return selectedServices.containsKey(serviceName);
+  }
+
+  // Helper method to toggle service selection
+  void _toggleServiceSelection(Map<String, dynamic> service) {
+    final serviceName = service['service_name'] as String;
+    
+    setState(() {
+      if (selectedServices.containsKey(serviceName)) {
+        // Service is selected, remove it
+        selectedServices.remove(serviceName);
+      } else {
+        // Service is not selected, add it
+        selectedServices[serviceName] = service;
+      }
     });
   }
 
@@ -323,11 +331,9 @@ class _SalonProfileState extends State<SalonProfile> {
                           return CheckboxListTile(
                             title: Text(serviceName),
                             subtitle: Text('Rs $price • ${duration} min${category != null ? ' • ${category.toUpperCase()}' : ''}'),
-                            value: selectedServices[serviceName] ?? false,
+                            value: _isServiceSelected(service),
                             onChanged: (bool? value) {
-                              setState(() {
-                                selectedServices[serviceName] = value ?? false;
-                              });
+                              _toggleServiceSelection(service);
                             },
                           );
                         }),
@@ -336,6 +342,50 @@ class _SalonProfileState extends State<SalonProfile> {
                 ),
               ),
               const SizedBox(height: 16),
+              
+              // Show selected services summary if any are selected
+              if (selectedServices.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Selected Services (${selectedServices.length})',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: selectedServices.values.map((service) {
+                          return Chip(
+                            label: Text(
+                              service['service_name'],
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            deleteIcon: Icon(Icons.close, size: 16),
+                            onDeleted: () => _toggleServiceSelection(service),
+                            backgroundColor: Colors.black,
+                            labelStyle: TextStyle(color: Colors.white),
+                            deleteIconColor: Colors.white,
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -375,11 +425,9 @@ class _SalonProfileState extends State<SalonProfile> {
                   backgroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: selectedServices.values.contains(true)
+                onPressed: selectedServices.isNotEmpty
                     ? () {
-                        final selectedServicesList = allServices
-                            .where((service) => selectedServices[service['service_name']] == true)
-                            .toList();
+                        final selectedServicesList = selectedServices.values.toList();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
