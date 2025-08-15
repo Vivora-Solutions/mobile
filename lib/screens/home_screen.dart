@@ -247,7 +247,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
   Future<void> _searchSalons(String query) async {
   if (query.isEmpty) {
     setState(() {
@@ -272,6 +271,48 @@ class _HomeScreenState extends State<HomeScreen> {
     _isSearching = false;
   });
 }
+  /*Future<void> _searchSalons(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _displayedSalons = _allSalons;
+        _isSearching = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+    });
+
+    try {
+      final searchResults = await _salonService.searchSalonsByName(query);
+      final transformedResults = searchResults.map((salon) {
+        final location = _getSalonLocation(salon);
+        return {
+          ...salon,
+          'latitude': location?.latitude,
+          'longitude': location?.longitude,
+        };
+      }).toList();
+      setState(() {
+        _displayedSalons = transformedResults;
+        print('Transformed search results: $_displayedSalons');
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Search error: ${e.toString().replaceAll('Exception: ', '')}',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isSearching = false;
+      });
+    }
+  }*/
 
   Future<void> _logout() async {
     try {
