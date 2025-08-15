@@ -148,24 +148,6 @@ class AuthService {
     }
   }
 
-  // // Helper method to clear local authentication data
-  // Future<void> _clearLocalAuth() async {
-  //   try {
-  //     final prefs = await SharedPreferences.getInstance();
-  //     await prefs.remove('access_token');
-  //     await prefs.remove('user_role');
-
-  //     // Clear all cookies
-  //     try {
-  //       _cookieJar.deleteAll();
-  //     } catch (e) {
-  //       print('Failed to clear cookies: $e');
-  //     }
-  //   } catch (e) {
-  //     print('Failed to clear local auth data: $e');
-  //   }
-  // }
-
   // Get current user token
   Future<String?> getAccessToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -180,9 +162,60 @@ class AuthService {
 
   // Check if user is logged in
   Future<bool> isLoggedIn() async {
-    // final token = await getAccessToken();
-    // return token != null;
-    return false;
+    try {
+      final token = await getAccessToken();
+      if (token == null) return false;
+
+      final response = await _dio.get(
+        '${ApiConstants.baseUrl}/auth/me',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          sendTimeout: Duration(seconds: 10),
+          receiveTimeout: Duration(seconds: 10),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        // User is authenticated and token is valid
+        return true;
+      } else if (response.statusCode == 401) {
+        // Token is invalid or expired, try to refresh
+        try {
+          await refreshAccessToken();
+          // If refresh succeeds, user is still logged in
+          return true;
+        } catch (e) {
+          // Refresh failed, clear invalid tokens and return false
+          await signOut();
+          return false;
+        }
+      } else {
+        // Other error codes mean user is not authenticated
+        return false;
+      }
+    } catch (e) {
+      if (e is DioException) {
+        if (e.response?.statusCode == 401) {
+          // Unauthorized - try to refresh token
+          try {
+            await refreshAccessToken();
+            return true;
+          } catch (refreshError) {
+            // Refresh failed, clear tokens
+            await signOut();
+            return false;
+          }
+        } else if (e.response?.statusCode == 404) {
+          // User not found - clear tokens
+          await signOut();
+          return false;
+        }
+      }
+      
+      // Network error or other issues - assume not logged in for safety
+      // but don't clear tokens in case it's just a temporary network issue
+      return false;
+    }
   }
 
   // Refresh access token (now uses cookies automatically)
