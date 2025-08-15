@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
         title: 'Book My Salon',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primarySwatch: Colors.purple,
+          primarySwatch: Colors.blueGrey,
           scaffoldBackgroundColor: Colors.white,
           appBarTheme: const AppBarTheme(elevation: 0, centerTitle: true),
         ),

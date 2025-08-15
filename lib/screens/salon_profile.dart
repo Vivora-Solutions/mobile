@@ -19,30 +19,24 @@ class SalonProfile extends StatefulWidget {
 class _SalonProfileState extends State<SalonProfile> {
   late PageController _pageController;
   Map<String, dynamic>? salonData;
-  List<Map<String, dynamic>> allServices = []; // Store all services
-  List<Map<String, dynamic>> filteredServices = []; // Store filtered services
+  List<Map<String, dynamic>> allServices = [];
+  List<Map<String, dynamic>> filteredServices = [];
   Map<String, bool> selectedServices = {};
   bool isLoading = true;
   String? error;
-  String selectedCategory = 'All'; // Default to show all services
+  String selectedCategory = 'All';
 
   int get totalCost => selectedServices.entries
       .where((e) => e.value)
       .map(
-        (e) =>
-            filteredServices.firstWhere((s) => s['service_name'] == e.key)['price']
-                as int,
+        (e) => filteredServices.firstWhere((s) => s['service_name'] == e.key)['price'] as int,
       )
       .fold(0, (a, b) => a + b);
 
   int get totalDuration => selectedServices.entries
       .where((e) => e.value)
       .map(
-        (e) =>
-            filteredServices.firstWhere(
-                  (s) => s['service_name'] == e.key,
-                )['duration_minutes']
-                as int,
+        (e) => filteredServices.firstWhere((s) => s['service_name'] == e.key)['duration_minutes'] as int,
       )
       .fold(0, (a, b) => a + b);
 
@@ -51,7 +45,7 @@ class _SalonProfileState extends State<SalonProfile> {
     super.initState();
     _pageController = PageController(
       initialPage: 0,
-      viewportFraction: 0.7, // 70% of width for current image
+      viewportFraction: 0.7,
       keepPage: true,
     );
     _loadSalonData();
@@ -64,7 +58,6 @@ class _SalonProfileState extends State<SalonProfile> {
         error = null;
       });
 
-      // Fetch salon details and services in parallel
       final results = await Future.wait([
         SalonService().getSalonById(widget.salonId),
         SalonService().getSalonServices(widget.salonId),
@@ -73,13 +66,8 @@ class _SalonProfileState extends State<SalonProfile> {
       setState(() {
         salonData = results[0] as Map<String, dynamic>;
         allServices = results[1] as List<Map<String, dynamic>>;
-        
-        // Initially show all services
         filteredServices = List.from(allServices);
-        
-        // Initialize selected services map
         _initializeSelectedServices();
-        
         isLoading = false;
       });
     } catch (e) {
@@ -92,19 +80,17 @@ class _SalonProfileState extends State<SalonProfile> {
 
   void _initializeSelectedServices() {
     selectedServices = {
-      for (var service in filteredServices)
-        service['service_name'] as String: false,
+      for (var service in filteredServices) service['service_name'] as String: false,
     };
   }
 
   void _updateServices(String category) {
     setState(() {
       selectedCategory = category;
-      
+
       if (category == 'All') {
         filteredServices = List.from(allServices);
       } else {
-        // Map the button text to actual category values in your database
         String categoryFilter;
         switch (category) {
           case 'Male':
@@ -122,14 +108,12 @@ class _SalonProfileState extends State<SalonProfile> {
           default:
             categoryFilter = category.toLowerCase();
         }
-        
+
         filteredServices = allServices
-            .where((service) => 
-                service['service_category']?.toString().toLowerCase() == categoryFilter)
+            .where((service) => service['service_category']?.toString().toLowerCase() == categoryFilter)
             .toList();
       }
-      
-      // Reset selected services for the new filtered list
+
       _initializeSelectedServices();
     });
   }
@@ -165,14 +149,13 @@ class _SalonProfileState extends State<SalonProfile> {
       );
     }
 
-    // Extract banner images
     final List<String> bannerImages = salonData?['banner_images'] != null
         ? (salonData!['banner_images'] as List)
             .map((img) => img['image_link'] as String?)
             .where((link) => link != null && link.isNotEmpty)
             .cast<String>()
             .toList()
-        : ['https://placehold.co/300x200']; // Fallback image
+        : ['https://placehold.co/300x200'];
 
     return Scaffold(
       body: SafeArea(
@@ -249,8 +232,6 @@ class _SalonProfileState extends State<SalonProfile> {
                 ],
               ),
               const SizedBox(height: 16),
-              
-              // Horizontal Scrollable Image Gallery
               SizedBox(
                 height: 200,
                 child: PageView.builder(
@@ -266,7 +247,6 @@ class _SalonProfileState extends State<SalonProfile> {
                           value = currentPage - index;
                           value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
                         } else {
-                          // Before the controller is fully initialized, use the initial page
                           value = _pageController.initialPage.toDouble() - index;
                           value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
                         }
@@ -298,15 +278,12 @@ class _SalonProfileState extends State<SalonProfile> {
                   },
                 ),
               ),
-              
               const SizedBox(height: 24),
               const Text(
                 "Services",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
-              
-              // Service Category Filter Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: ['All', 'Male', 'Female', 'Children', 'Unisex'].map((category) {
@@ -325,31 +302,39 @@ class _SalonProfileState extends State<SalonProfile> {
                   );
                 }).toList(),
               ),
-              
               const SizedBox(height: 16),
-              
-              // Dynamic services from API (filtered)
-              if (filteredServices.isEmpty)
-                Text('No services available for ${selectedCategory.toLowerCase()} category')
-              else
-                ...filteredServices.map((service) {
-                  final serviceName = service['service_name'] as String;
-                  final price = service['price'] as int;
-                  final duration = service['duration_minutes'] as int;
-                  final category = service['service_category'] as String?;
-                  
-                  return CheckboxListTile(
-                    title: Text(serviceName),
-                    subtitle: Text('Rs $price • ${duration} min${category != null ? ' • ${category.toUpperCase()}' : ''}'),
-                    value: selectedServices[serviceName] ?? false,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        selectedServices[serviceName] = value ?? false;
-                      });
-                    },
-                  );
-                }),
-              
+              // Scrollable services section
+              SizedBox(
+                height: 200, // Constrain the height of the services section
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      if (filteredServices.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: Text('No services available for ${selectedCategory.toLowerCase()} category'),
+                        )
+                      else
+                        ...filteredServices.map((service) {
+                          final serviceName = service['service_name'] as String;
+                          final price = service['price'] as int;
+                          final duration = service['duration_minutes'] as int;
+                          final category = service['service_category'] as String?;
+                          return CheckboxListTile(
+                            title: Text(serviceName),
+                            subtitle: Text('Rs $price • ${duration} min${category != null ? ' • ${category.toUpperCase()}' : ''}'),
+                            value: selectedServices[serviceName] ?? false,
+                            onChanged: (bool? value) {
+                              setState(() {
+                                selectedServices[serviceName] = value ?? false;
+                              });
+                            },
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -390,24 +375,26 @@ class _SalonProfileState extends State<SalonProfile> {
                   backgroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: selectedServices.values.contains(true) ? () {
-                  final selectedServicesList = allServices
-                    .where((service) => selectedServices[service['service_name']] == true)
-                    .toList();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BookingScreen(
-                       salonId: widget.salonId,
-                       salonName: salonData?['salon_name'] ?? widget.salonName,
-                       selectedServices: selectedServicesList,
-                       totalCost: totalCost,
-                       totalDuration: totalDuration,
-                       salonData: salonData,
-                      ),
-                    ),
-                  );
-                } : null,
+                onPressed: selectedServices.values.contains(true)
+                    ? () {
+                        final selectedServicesList = allServices
+                            .where((service) => selectedServices[service['service_name']] == true)
+                            .toList();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BookingScreen(
+                              salonId: widget.salonId,
+                              salonName: salonData?['salon_name'] ?? widget.salonName,
+                              selectedServices: selectedServicesList,
+                              totalCost: totalCost,
+                              totalDuration: totalDuration,
+                              salonData: salonData,
+                            ),
+                          ),
+                        );
+                      }
+                    : null,
                 child: const Text(
                   "Proceed",
                   style: TextStyle(color: Colors.white, fontSize: 16),
