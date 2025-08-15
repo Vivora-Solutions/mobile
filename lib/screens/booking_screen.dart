@@ -298,9 +298,12 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 child: TableCalendar<dynamic>(
                   firstDay: DateTime.now(),
-                  lastDay: DateTime.now().add(Duration(days: 60)),
+                  lastDay: DateTime.now().add(Duration(days: 30)),
                   focusedDay: _focusedDay,
                   calendarFormat: _calendarFormat,
+                  startingDayOfWeek: StartingDayOfWeek.monday,
+                  headerVisible: true,
+                  
                   selectedDayPredicate: (day) {
                     return selectedDate != null &&
                         isSameDay(selectedDate!, day);
@@ -459,7 +462,7 @@ class _BookingScreenState extends State<BookingScreen> {
               SizedBox(height: 24),
 
               // Booking Details Section
-              if (selectedTimeSlot != null)
+              // if (selectedTimeSlot != null)
                 // Container(
                 //   width: double.infinity,
                 //   padding: EdgeInsets.all(16),
