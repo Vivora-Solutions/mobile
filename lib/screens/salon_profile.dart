@@ -79,26 +79,31 @@ class _SalonProfileState extends State<SalonProfile> {
       if (category == 'All') {
         filteredServices = List.from(allServices);
       } else {
-        String categoryFilter;
+        List<String> categoryFilters = [];
+
         switch (category) {
           case 'Male':
-            categoryFilter = 'men';
+            categoryFilters = ['men', 'unisex'];
             break;
           case 'Female':
-            categoryFilter = 'women';
+            categoryFilters = ['women', 'unisex'];
             break;
           case 'Children':
-            categoryFilter = 'children';
+            categoryFilters = ['children'];
             break;
           case 'Unisex':
-            categoryFilter = 'unisex';
+            categoryFilters = ['unisex'];
             break;
           default:
-            categoryFilter = category.toLowerCase();
+            categoryFilters = [category.toLowerCase()];
         }
 
         filteredServices = allServices
-            .where((service) => service['service_category']?.toString().toLowerCase() == categoryFilter)
+            .where(
+              (service) => categoryFilters.contains(
+                service['service_category']?.toString().toLowerCase(),
+              ),
+            )
             .toList();
       }
       // No need to reinitialize selectedServices - they persist across filter changes
@@ -114,7 +119,7 @@ class _SalonProfileState extends State<SalonProfile> {
   // Helper method to toggle service selection
   void _toggleServiceSelection(Map<String, dynamic> service) {
     final serviceName = service['service_name'] as String;
-    
+
     setState(() {
       if (selectedServices.containsKey(serviceName)) {
         // Service is selected, remove it
@@ -135,9 +140,7 @@ class _SalonProfileState extends State<SalonProfile> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (error != null) {
@@ -147,10 +150,7 @@ class _SalonProfileState extends State<SalonProfile> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('Error: $error'),
-              ElevatedButton(
-                onPressed: _loadSalonData,
-                child: Text('Retry'),
-              ),
+              ElevatedButton(onPressed: _loadSalonData, child: Text('Retry')),
             ],
           ),
         ),
@@ -159,10 +159,10 @@ class _SalonProfileState extends State<SalonProfile> {
 
     final List<String> bannerImages = salonData?['banner_images'] != null
         ? (salonData!['banner_images'] as List)
-            .map((img) => img['image_link'] as String?)
-            .where((link) => link != null && link.isNotEmpty)
-            .cast<String>()
-            .toList()
+              .map((img) => img['image_link'] as String?)
+              .where((link) => link != null && link.isNotEmpty)
+              .cast<String>()
+              .toList()
         : ['https://placehold.co/300x200'];
 
     return Scaffold(
@@ -193,7 +193,11 @@ class _SalonProfileState extends State<SalonProfile> {
                             width: 50,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
-                              return Icon(Icons.store, size: 50, color: Colors.grey);
+                              return Icon(
+                                Icons.store,
+                                size: 50,
+                                color: Colors.grey,
+                              );
                             },
                           )
                         : Icon(Icons.store, size: 50, color: Colors.grey),
@@ -240,52 +244,56 @@ class _SalonProfileState extends State<SalonProfile> {
                 ],
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                height: 200,
-                child: PageView.builder(
-                  itemCount: bannerImages.length,
-                  controller: _pageController,
-                  itemBuilder: (context, index) {
-                    return AnimatedBuilder(
-                      animation: _pageController,
-                      builder: (context, child) {
-                        double value = 1.0;
-                        if (_pageController.hasClients && _pageController.position.hasPixels) {
-                          final currentPage = _pageController.page ?? 0.0;
-                          value = currentPage - index;
-                          value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
-                        } else {
-                          value = _pageController.initialPage.toDouble() - index;
-                          value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
-                        }
-                        return Transform.scale(
-                          scale: Curves.easeInOut.transform(value),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                bannerImages[index],
-                                fit: BoxFit.cover,
-                                width: 200,
-                                height: 200,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: Colors.grey,
-                                    child: Center(
-                                      child: Text('Image Error'),
-                                    ),
-                                  );
-                                },
+              if (selectedServices.isEmpty)...[
+                SizedBox(
+                  height: 200,
+                  child: PageView.builder(
+                    itemCount: bannerImages.length,
+                    controller: _pageController,
+                    itemBuilder: (context, index) {
+                      return AnimatedBuilder(
+                        animation: _pageController,
+                        builder: (context, child) {
+                          double value = 1.0;
+                          if (_pageController.hasClients &&
+                              _pageController.position.hasPixels) {
+                            final currentPage = _pageController.page ?? 0.0;
+                            value = currentPage - index;
+                            value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
+                          } else {
+                            value =
+                                _pageController.initialPage.toDouble() - index;
+                            value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
+                          }
+                          return Transform.scale(
+                            scale: Curves.easeInOut.transform(value),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  bannerImages[index],
+                                  fit: BoxFit.cover,
+                                  width: 200,
+                                  height: 200,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey,
+                                      child: Center(child: Text('Image Error')),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
+              ],
               const SizedBox(height: 24),
               const Text(
                 "Services",
@@ -294,15 +302,22 @@ class _SalonProfileState extends State<SalonProfile> {
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: ['All', 'Male', 'Female', 'Children', 'Unisex'].map((category) {
+                children: ['All', 'Male', 'Female', 'Children', 'Unisex'].map((
+                  category,
+                ) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2.0),
                     child: ElevatedButton(
                       onPressed: () => _updateServices(category),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedCategory == category ? Colors.black : Colors.grey,
+                        backgroundColor: selectedCategory == category
+                            ? Colors.black
+                            : Colors.grey,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0,
+                          vertical: 4.0,
+                        ),
                         textStyle: const TextStyle(fontSize: 12),
                       ),
                       child: Text(category),
@@ -313,24 +328,29 @@ class _SalonProfileState extends State<SalonProfile> {
               const SizedBox(height: 16),
               // Scrollable services section
               SizedBox(
-                height: 200, // Constrain the height of the services section
+                height: selectedServices.isEmpty ? null : 300, // Constrain the height of the services section
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
                       if (filteredServices.isEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          child: Text('No services available for ${selectedCategory.toLowerCase()} category'),
+                          child: Text(
+                            'No services available for ${selectedCategory.toLowerCase()} category',
+                          ),
                         )
                       else
                         ...filteredServices.map((service) {
                           final serviceName = service['service_name'] as String;
                           final price = service['price'] as int;
                           final duration = service['duration_minutes'] as int;
-                          final category = service['service_category'] as String?;
+                          final category =
+                              service['service_category'] as String?;
                           return CheckboxListTile(
                             title: Text(serviceName),
-                            subtitle: Text('Rs $price • ${duration} min${category != null ? ' • ${category.toUpperCase()}' : ''}'),
+                            subtitle: Text(
+                              'Rs $price • ${duration} min${category != null ? ' • ${category.toUpperCase()}' : ''}',
+                            ),
                             value: _isServiceSelected(service),
                             onChanged: (bool? value) {
                               _toggleServiceSelection(service);
@@ -341,8 +361,8 @@ class _SalonProfileState extends State<SalonProfile> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              
+              // const SizedBox(height: 8),
+
               // Show selected services summary if any are selected
               if (selectedServices.isNotEmpty) ...[
                 Container(
@@ -362,7 +382,7 @@ class _SalonProfileState extends State<SalonProfile> {
                           color: Colors.grey[700],
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      // const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 4,
@@ -384,70 +404,78 @@ class _SalonProfileState extends State<SalonProfile> {
                   ),
                 ),
                 const SizedBox(height: 16),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Duration",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      totalDuration >= 60
+                          ? "${totalDuration ~/ 60} ${totalDuration ~/ 60 == 1 ? 'hour' : 'hours'}${totalDuration % 60 > 0 ? ' ${totalDuration % 60} min' : ''}"
+                          : "${totalDuration} min",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Total",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      "Rs $totalCost",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: () {
+                    final selectedServicesList = selectedServices.values
+                        .toList();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BookingScreen(
+                          salonId: widget.salonId,
+                          salonName:
+                              salonData?['salon_name'] ?? widget.salonName,
+                          selectedServices: selectedServicesList,
+                          totalCost: totalCost,
+                          totalDuration: totalDuration,
+                          salonData: salonData,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Proceed",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
               ],
-              
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Duration",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    "${totalDuration ~/ 60} hours ${totalDuration % 60} min",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Total",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    "Rs $totalCost",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                onPressed: selectedServices.isNotEmpty
-                    ? () {
-                        final selectedServicesList = selectedServices.values.toList();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BookingScreen(
-                              salonId: widget.salonId,
-                              salonName: salonData?['salon_name'] ?? widget.salonName,
-                              selectedServices: selectedServicesList,
-                              totalCost: totalCost,
-                              totalDuration: totalDuration,
-                              salonData: salonData,
-                            ),
-                          ),
-                        );
-                      }
-                    : null,
-                child: const Text(
-                  "Proceed",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ),
             ],
           ),
         ),
