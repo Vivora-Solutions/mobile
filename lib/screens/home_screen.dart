@@ -9,6 +9,7 @@ import 'package:book_my_salon/services/salon_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:book_my_salon/screens/user_profile.dart';
 import 'package:book_my_salon/screens/current_booking.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +18,7 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   latLng.LatLng? _currentLocation;
   bool _isLoading = true;
   bool _isSearching = false;
@@ -29,13 +30,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final TextEditingController _searchController = TextEditingController();
   final SalonService _salonService = SalonService();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   bool _useLocationBasedSearch = true;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
     _fetchInitialData();
+    _animationController.forward();
   }
 
   Future<void> _fetchInitialData() async {
@@ -288,33 +300,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Estimate heights for positioning
-    const double searchBarHeight = 80.0; // TextField (~56) + padding
+    const double searchBarHeight = 80.0;
     final double bottomNavHeight = kBottomNavigationBarHeight +
-        MediaQuery.of(context).padding.bottom; // Include system insets
+        MediaQuery.of(context).padding.bottom;
     final double availableHeight = MediaQuery.of(context).size.height -
         MediaQuery.of(context).padding.top -
         searchBarHeight -
         bottomNavHeight -
-        60.0; // Increased gap to 60px for visibility
+        60.0;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text(
-          'SalonDora',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+        title: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 98, 98, 98), Color.fromARGB(255, 255, 255, 255)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds),
+          child: Text(
+            'SalonDora',
+            style: GoogleFonts.dancingScript(
+              fontSize: 30,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
-        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _refreshSalonsForLocation,
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: _logout,
           ),
         ],
       ),
@@ -322,7 +352,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Stack(
               children: [
-                // Map as background
                 Positioned.fill(
                   child: FlutterMap(
                     options: MapOptions(
@@ -350,6 +379,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: Colors.white,
                                     width: 2,
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
                                 ),
                                 child: const Icon(
                                   Icons.my_location,
@@ -368,12 +404,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                   onTap: () => _onSalonMarkerTapped(salon),
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.red,
+                                      color: Colors.redAccent,
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: Colors.white,
                                         width: 2,
                                       ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.3),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
                                     ),
                                     child: const Icon(
                                       Icons.store,
@@ -391,64 +434,91 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                // Foreground content
                 SafeArea(
                   child: Stack(
                     children: [
-                      // Search Field (fixed at top)
                       Positioned(
                         top: 0,
                         left: 0,
                         right: 0,
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: TextField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              hintText: 'Search a Salon...',
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.9),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  spreadRadius: 5,
+                                ),
+                              ],
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
                               ),
-                              suffixIcon: _isSearching
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: Padding(
-                                        padding: EdgeInsets.all(12.0),
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
-                                    )
-                                  : IconButton(
-                                      icon: Icon(
-                                        _searchController.text.isEmpty
-                                            ? Icons.search
-                                            : Icons.clear,
-                                      ),
-                                      onPressed: () {
-                                        if (_searchController.text.isNotEmpty) {
-                                          _searchController.clear();
-                                          _searchSalons('');
-                                        }
-                                      },
-                                    ),
                             ),
-                            onChanged: (value) {
-                              Future.delayed(const Duration(milliseconds: 500),
-                                  () {
-                                if (_searchController.text == value) {
-                                  _searchSalons(value);
-                                }
-                              });
-                            },
+                            child: TextField(
+                              controller: _searchController,
+                              style: GoogleFonts.poppins(
+                                color: Colors.black87,
+                                fontSize: 16,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Search a Salon...',
+                                hintStyle: GoogleFonts.poppins(
+                                  color: Colors.grey[600],
+                                ),
+                                filled: true,
+                                fillColor: Colors.white.withOpacity(0.7),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                suffixIcon: _isSearching
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Padding(
+                                          padding: EdgeInsets.all(12.0),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(
+                                                Colors.purple),
+                                          ),
+                                        ),
+                                      )
+                                    : IconButton(
+                                        icon: Icon(
+                                          _searchController.text.isEmpty
+                                              ? Icons.search
+                                              : Icons.clear,
+                                          color: Colors.grey[600],
+                                        ),
+                                        onPressed: () {
+                                          if (_searchController.text.isNotEmpty) {
+                                            _searchController.clear();
+                                            _searchSalons('');
+                                          }
+                                        },
+                                      ),
+                              ),
+                              onChanged: (value) {
+                                Future.delayed(const Duration(milliseconds: 500),
+                                    () {
+                                  if (_searchController.text == value) {
+                                    _searchSalons(value);
+                                  }
+                                });
+                              },
+                            ),
                           ),
                         ),
                       ),
-                      // Salon section with animation
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeInOut,
@@ -461,12 +531,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
                           constraints: BoxConstraints(
-                            minHeight: _isSalonSectionExpanded ? 0 : 80.0, // Ensure enough height in collapsed state
+                            minHeight: _isSalonSectionExpanded ? 0 : 80.0,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white, // Solid white for clarity
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[300]!, width: 1), // Debug border
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.2),
@@ -478,20 +547,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Handle for collapsed state
                               if (!_isSalonSectionExpanded)
                                 Container(
                                   width: 48,
                                   height: 6,
                                   margin: const EdgeInsets.symmetric(vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[500],
+                                    color: Colors.grey[400],
                                     borderRadius: BorderRadius.circular(3),
                                   ),
                                 ),
-                              // Section heading
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0, vertical: 8.0),
                                 child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -504,10 +572,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   ? 'Nearby Salons'
                                                   : 'All Salons')
                                               : 'Search Results (${_displayedSalons.length})',
-                                          style: const TextStyle(
+                                          style: GoogleFonts.poppins(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.black, // Ensure visible
+                                            color: Colors.black87,
                                           ),
                                         ),
                                         const SizedBox(width: 8),
@@ -517,7 +585,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 ? Icons.keyboard_arrow_down
                                                 : Icons.keyboard_arrow_up,
                                             size: 28,
-                                            color: Colors.black, // Ensure visible
+                                            color: const Color.fromARGB(255, 131, 129, 131),
                                           ),
                                           onPressed: () {
                                             setState(() {
@@ -533,7 +601,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         _isSalonSectionExpanded)
                                       Text(
                                         '${_displayedSalons.length} found',
-                                        style: TextStyle(
+                                        style: GoogleFonts.poppins(
                                           fontSize: 14,
                                           color: Colors.grey[600],
                                         ),
@@ -541,7 +609,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ],
                                 ),
                               ),
-                              // Location status indicator and salon list (hidden when collapsed)
                               if (_isSalonSectionExpanded) ...[
                                 if (_useLocationBasedSearch &&
                                     _currentLocation != null)
@@ -565,7 +632,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           const SizedBox(width: 8),
                                           Text(
                                             'Showing salons near your location',
-                                            style: TextStyle(
+                                            style: GoogleFonts.poppins(
                                               color: Colors.green[700],
                                               fontSize: 12,
                                               fontWeight: FontWeight.w500,
@@ -583,15 +650,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
-                                              const Icon(Icons.store,
-                                                  size: 64, color: Colors.grey),
+                                              Icon(
+                                                Icons.store,
+                                                size: 64,
+                                                color: Colors.grey[400],
+                                              ),
                                               const SizedBox(height: 16),
                                               Text(
                                                 _searchController.text.isEmpty
                                                     ? 'No salons available nearby'
                                                     : 'No salons found for "${_searchController.text}"',
                                                 textAlign: TextAlign.center,
-                                                style: TextStyle(
+                                                style: GoogleFonts.poppins(
                                                   fontSize: 16,
                                                   color: Colors.grey[600],
                                                 ),
@@ -599,6 +669,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                               if (_useLocationBasedSearch) ...[
                                                 const SizedBox(height: 16),
                                                 ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(8),
+                                                    ),
+                                                  ),
                                                   onPressed: () async {
                                                     setState(() {
                                                       _useLocationBasedSearch =
@@ -606,8 +683,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     });
                                                     await _fetchSalons();
                                                   },
-                                                  child:
-                                                      const Text('Show All Salons'),
+                                                  child: Text(
+                                                    'Show All Salons',
+                                                    style: GoogleFonts.poppins(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
                                                 ),
                                               ],
                                             ],
@@ -620,117 +702,135 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 _displayedSalons[index];
                                             final distance = salon['distance'];
 
-                                            return Card(
-                                              margin: const EdgeInsets.only(
-                                                  bottom: 12),
-                                              child: ListTile(
-                                                leading: Container(
-                                                  width: 50,
-                                                  height: 50,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey[300],
-                                                    borderRadius:
-                                                        BorderRadius.circular(8),
-                                                  ),
-                                                  child: salon[
-                                                              'salon_logo_link'] !=
-                                                          null
-                                                      ? ClipRRect(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                          child: Image.network(
-                                                            salon[
-                                                                'salon_logo_link'],
-                                                            fit: BoxFit.cover,
-                                                            errorBuilder: (
-                                                              context,
-                                                              error,
-                                                              stackTrace,
-                                                            ) =>
-                                                                Icon(
-                                                              Icons.store,
-                                                              color:
-                                                                  Colors.grey[600],
-                                                            ),
-                                                          ),
-                                                        )
-                                                      : Icon(
-                                                          Icons.store,
-                                                          color:
-                                                              Colors.grey[600],
-                                                        ),
+                                            return FadeTransition(
+                                              opacity: _fadeAnimation,
+                                              child: Card(
+                                                margin: const EdgeInsets.only(
+                                                    bottom: 12, left: 8, right: 8),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
-                                                title: Text(
-                                                  salon['salon_name'] ??
-                                                      'Unknown Salon',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                                subtitle: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      salon['salon_address'] ??
-                                                          'Address not available',
-                                                      style: const TextStyle(
-                                                          fontSize: 14),
+                                                elevation: 4,
+                                                child: ListTile(
+                                                  leading: Container(
+                                                    width: 50,
+                                                    height: 50,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[200],
+                                                      borderRadius:
+                                                          BorderRadius.circular(8),
                                                     ),
-                                                    if (distance != null) ...[
-                                                      const SizedBox(height: 4),
-                                                      Row(
-                                                        children: [
-                                                          const Icon(
-                                                            Icons.location_on,
-                                                            size: 14,
-                                                            color: Colors.blue,
+                                                    child: salon[
+                                                                'salon_logo_link'] !=
+                                                            null
+                                                        ? ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(8),
+                                                            child: Image.network(
+                                                              salon[
+                                                                  'salon_logo_link'],
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder: (
+                                                                context,
+                                                                error,
+                                                                stackTrace,
+                                                              ) =>
+                                                                  Icon(
+                                                                Icons.store,
+                                                                color: Colors
+                                                                    .grey[600],
+                                                              ),
+                                                            ),
+                                                          )
+                                                        : Icon(
+                                                            Icons.store,
+                                                            color:
+                                                                Colors.grey[600],
                                                           ),
-                                                          const SizedBox(width: 4),
-                                                          Text(
-                                                            '${(distance / 1000).toStringAsFixed(1)} km away',
-                                                            style: const TextStyle(
-                                                              fontSize: 12,
+                                                  ),
+                                                  title: Text(
+                                                    salon['salon_name'] ??
+                                                        'Unknown Salon',
+                                                    style: GoogleFonts.poppins(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 16,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                  subtitle: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        salon['salon_address'] ??
+                                                            'Address not available',
+                                                        style: GoogleFonts.poppins(
+                                                            fontSize: 14,
+                                                            color:
+                                                                Colors.grey[600]),
+                                                      ),
+                                                      if (distance != null) ...[
+                                                        const SizedBox(height: 4),
+                                                        Row(
+                                                          children: [
+                                                            const Icon(
+                                                              Icons.location_on,
+                                                              size: 14,
                                                               color: Colors.blue,
-                                                              fontWeight:
-                                                                  FontWeight.w500,
                                                             ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                    if (salon['average_rating'] !=
-                                                        null) ...[
-                                                      const SizedBox(height: 4),
-                                                      Row(
-                                                        children: [
-                                                          const Icon(
-                                                            Icons.star,
-                                                            size: 14,
-                                                            color: Colors.amber,
-                                                          ),
-                                                          const SizedBox(width: 4),
-                                                          Text(
-                                                            '${salon['average_rating'].toStringAsFixed(1)}',
-                                                            style: const TextStyle(
-                                                              fontSize: 12,
-                                                              fontWeight:
-                                                                  FontWeight.w500,
+                                                            const SizedBox(
+                                                                width: 4),
+                                                            Text(
+                                                              '${(distance / 1000).toStringAsFixed(1)} km away',
+                                                              style:
+                                                                  GoogleFonts.poppins(
+                                                                fontSize: 12,
+                                                                color: Colors.blue,
+                                                                fontWeight:
+                                                                    FontWeight.w500,
+                                                              ),
                                                             ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
+                                                          ],
+                                                        ),
+                                                      ],
+                                                      if (salon['average_rating'] !=
+                                                          null) ...[
+                                                        const SizedBox(height: 4),
+                                                        Row(
+                                                          children: [
+                                                            const Icon(
+                                                              Icons.star,
+                                                              size: 14,
+                                                              color: Colors.amber,
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 4),
+                                                            Text(
+                                                              '${salon['average_rating'].toStringAsFixed(1)}',
+                                                              style: GoogleFonts
+                                                                  .poppins(
+                                                                fontSize: 12,
+                                                                fontWeight:
+                                                                    FontWeight.w500,
+                                                                color: Colors
+                                                                    .black87,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
                                                   ],
+                                                  ),
+                                                  trailing: const Icon(
+                                                    Icons.arrow_forward_ios,
+                                                    size: 16,
+                                                    color: Color.fromARGB(255, 0, 0, 0),
+                                                  ),
+                                                  onTap: () =>
+                                                      _onSalonMarkerTapped(salon),
                                                 ),
-                                                trailing: const Icon(
-                                                  Icons.arrow_forward_ios,
-                                                  size: 16,
-                                                ),
-                                                onTap: () =>
-                                                    _onSalonMarkerTapped(salon),
                                               ),
                                             );
                                           },
@@ -746,34 +846,61 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'My Bookings'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-        currentIndex: 0,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey[500],
-        backgroundColor: Colors.white,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              break;
-            case 1:
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const CurrentBooking()),
-              );
-              break;
-            case 2:
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => UserProfile()),
-              );
-              break;
-          }
-        },
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.book),
+              label: 'My Bookings',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+          currentIndex: 0,
+          selectedItemColor: const Color.fromARGB(255, 96, 94, 94),
+          unselectedItemColor: Colors.grey[500],
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          selectedLabelStyle: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: GoogleFonts.poppins(),
+          onTap: (index) {
+            switch (index) {
+              case 0:
+                break;
+              case 1:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CurrentBooking()),
+                );
+                break;
+              case 2:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => UserProfile()),
+                );
+                break;
+            }
+          },
+        ),
       ),
     );
   }
@@ -781,6 +908,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 }
