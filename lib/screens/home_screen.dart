@@ -17,11 +17,12 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   latLng.LatLng? _currentLocation;
   bool _isLoading = true;
   bool _isSearching = false;
   bool _isSalonSectionExpanded = false; // Add state for expansion
+  bool _isLoggedinAlready = true;
 
   List<Map<String, dynamic>> _allSalons = [];
   List<Map<String, dynamic>> _displayedSalons = [];
@@ -32,14 +33,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _useLocationBasedSearch = true;
 
-  ScrollController _scrollController = ScrollController();
-  double _lastScrollOffset = 0.0;
+  final ScrollController _scrollController = ScrollController();
+  final double _lastScrollOffset = 0.0;
 
   @override
   void initState() {
     super.initState();
     _fetchInitialData();
-    // Remove the scroll controller listener from here
+    _isLoggedIn();
+
+    // Add listener for app lifecycle changes
+    WidgetsBinding.instance.addObserver(this);
   }
 
   Future<void> _fetchInitialData() async {
@@ -272,12 +276,41 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _isLoggedIn() async {
+    try {
+      final isLoggedIn = await AuthService().isLoggedIn();
+      setState(() {
+        _isLoggedinAlready = isLoggedIn;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoggedinAlready = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error checking login status: ${e.toString().replaceAll('Exception: ', '')}',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _logout() async {
     try {
       await AuthService().signOut();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      // Update the state to reflect logout
+      setState(() {
+        _isLoggedinAlready = false;
+      });
+
+      // Optionally show a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logged out successfully'),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -311,31 +344,44 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _refreshSalonsForLocation,
           ),
           IconButton(
-            icon: Icon(Icons.logout, color: Colors.black),
+            icon: _isLoggedinAlready
+                ? Icon(Icons.logout, color: Colors.red)
+                : Icon(Icons.login, color: Colors.green),
             onPressed: () async {
-              // Show confirmation dialog
-              final shouldLogout = await showDialog<bool>(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text('Logout'),
-                    content: Text('Are you sure you want to logout?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: Text('Logout'),
-                      ),
-                    ],
-                  );
-                },
-              );
+              if (!_isLoggedinAlready) {
+                // Navigate to login and refresh when returning
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
 
-              if (shouldLogout == true) {
-                _logout();
+                // Refresh login status when returning from login screen
+                _isLoggedIn();
+              } else {
+                // Show confirmation dialog
+                final shouldLogout = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Logout'),
+                      content: Text('Are you sure you want to logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: Text('Logout'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (shouldLogout == true) {
+                  _logout();
+                }
               }
             },
           ),
@@ -510,9 +556,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Text(
                             _searchController.text.isEmpty
-                                ? (_useLocationBasedSearch
-                                      ? ''
-                                      : 'All Salons')
+                                ? (_useLocationBasedSearch ? '' : 'All Salons')
                                 : 'Search Results (${_displayedSalons.length})',
                             style: TextStyle(
                               fontSize: 18,
@@ -763,6 +807,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  // Add this method to make the class implement WidgetsBindingObserver
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // Refresh login status when app comes back into focus
+      _isLoggedIn();
+    }
   }
 }
