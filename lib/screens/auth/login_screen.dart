@@ -11,8 +11,9 @@ import 'package:book_my_salon/utils/styles.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool fromBooking; // Flag to indicate if coming from booking flow
-  
-  const LoginScreen({super.key, this.fromBooking = false});
+  final String? prefilledEmail; // Email to prefill from signup
+
+  const LoginScreen({super.key, this.fromBooking = false, this.prefilledEmail});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -23,6 +24,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Prefill email if provided
+    if (widget.prefilledEmail != null) {
+      _emailController.text = widget.prefilledEmail!;
+    }
+  }
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
@@ -72,11 +82,11 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleBookingRedirect() async {
     try {
       final bookingData = await BookingStorageService.getPendingBooking();
-      
+
       if (bookingData != null) {
         // Clear the stored data since we're using it now
         await BookingStorageService.clearPendingBooking();
-        
+
         // Navigate to booking confirmation screen
         Navigator.pushReplacement(
           context,
@@ -86,7 +96,9 @@ class _LoginScreenState extends State<LoginScreen> {
               salonName: bookingData['salonName'],
               stylistId: bookingData['stylistId'],
               stylistName: bookingData['stylistName'],
-              selectedServices: List<Map<String, dynamic>>.from(bookingData['selectedServices']),
+              selectedServices: List<Map<String, dynamic>>.from(
+                bookingData['selectedServices'],
+              ),
               service: (bookingData['selectedServices'] as List)
                   .map((s) => s['service_name'])
                   .join(', '),
@@ -113,7 +125,9 @@ class _LoginScreenState extends State<LoginScreen> {
       // If there's an error, just go to home screen
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error retrieving booking data. Please try booking again.'),
+          content: Text(
+            'Error retrieving booking data. Please try booking again.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -149,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 80),
-                  
+
                   // Show booking context message if coming from booking
                   if (widget.fromBooking)
                     Container(
@@ -173,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                  
+
                   // App Logo/Title
                   Text(
                     'Book My Salon',
@@ -182,7 +196,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    widget.fromBooking ? 'Login to continue booking' : 'Welcome back!',
+                    widget.fromBooking
+                        ? 'Login to continue booking'
+                        : 'Welcome back!',
                     style: AppStyles.subHeadingStyle,
                     textAlign: TextAlign.center,
                   ),
@@ -211,7 +227,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       label: const Text('Continue with Google'),
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.black,
-                        backgroundColor: const Color.fromARGB(255, 183, 183, 183),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          183,
+                          183,
+                          183,
+                        ),
                         side: const BorderSide(color: Colors.grey),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -270,7 +291,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Login Button
                   CustomButton(
-                    text: widget.fromBooking ? 'Login & Continue Booking' : 'Login',
+                    text: widget.fromBooking
+                        ? 'Login & Continue Booking'
+                        : 'Login',
                     onPressed: _login,
                     isLoading: _isLoading,
                   ),
@@ -293,7 +316,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: AppStyles.linkStyle,
                     ),
                   ),
-                  
+
                   // Back to booking button (optional)
                   if (widget.fromBooking)
                     TextButton(

@@ -511,7 +511,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Text(
                             _searchController.text.isEmpty
                                 ? (_useLocationBasedSearch
-                                      ? 'Nearby Salons'
+                                      ? ''
                                       : 'All Salons')
                                 : 'Search Results (${_displayedSalons.length})',
                             style: TextStyle(
