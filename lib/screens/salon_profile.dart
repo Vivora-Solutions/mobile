@@ -21,23 +21,18 @@ class _SalonProfileState extends State<SalonProfile> {
   Map<String, dynamic>? salonData;
   List<Map<String, dynamic>> allServices = [];
   List<Map<String, dynamic>> filteredServices = [];
-  Map<String, bool> selectedServices = {};
+  // Change to store service objects instead of just names
+  Map<String, Map<String, dynamic>> selectedServices = {};
   bool isLoading = true;
   String? error;
   String selectedCategory = 'All';
 
-  int get totalCost => selectedServices.entries
-      .where((e) => e.value)
-      .map(
-        (e) => filteredServices.firstWhere((s) => s['service_name'] == e.key)['price'] as int,
-      )
+  int get totalCost => selectedServices.values
+      .map((service) => service['price'] as int)
       .fold(0, (a, b) => a + b);
 
-  int get totalDuration => selectedServices.entries
-      .where((e) => e.value)
-      .map(
-        (e) => filteredServices.firstWhere((s) => s['service_name'] == e.key)['duration_minutes'] as int,
-      )
+  int get totalDuration => selectedServices.values
+      .map((service) => service['duration_minutes'] as int)
       .fold(0, (a, b) => a + b);
 
   @override
@@ -67,7 +62,6 @@ class _SalonProfileState extends State<SalonProfile> {
         salonData = results[0] as Map<String, dynamic>;
         allServices = results[1] as List<Map<String, dynamic>>;
         filteredServices = List.from(allServices);
-        _initializeSelectedServices();
         isLoading = false;
       });
     } catch (e) {
@@ -78,12 +72,6 @@ class _SalonProfileState extends State<SalonProfile> {
     }
   }
 
-  void _initializeSelectedServices() {
-    selectedServices = {
-      for (var service in filteredServices) service['service_name'] as String: false,
-    };
-  }
-
   void _updateServices(String category) {
     setState(() {
       selectedCategory = category;
@@ -91,30 +79,55 @@ class _SalonProfileState extends State<SalonProfile> {
       if (category == 'All') {
         filteredServices = List.from(allServices);
       } else {
-        String categoryFilter;
+        List<String> categoryFilters = [];
+
         switch (category) {
           case 'Male':
-            categoryFilter = 'men';
+            categoryFilters = ['men', 'unisex'];
             break;
           case 'Female':
-            categoryFilter = 'women';
+            categoryFilters = ['women', 'unisex'];
             break;
           case 'Children':
-            categoryFilter = 'children';
+            categoryFilters = ['children'];
             break;
           case 'Unisex':
-            categoryFilter = 'unisex';
+            categoryFilters = ['unisex'];
             break;
           default:
-            categoryFilter = category.toLowerCase();
+            categoryFilters = [category.toLowerCase()];
         }
 
         filteredServices = allServices
-            .where((service) => service['service_category']?.toString().toLowerCase() == categoryFilter)
+            .where(
+              (service) => categoryFilters.contains(
+                service['service_category']?.toString().toLowerCase(),
+              ),
+            )
             .toList();
       }
+      // No need to reinitialize selectedServices - they persist across filter changes
+    });
+  }
 
-      _initializeSelectedServices();
+  // Helper method to check if a service is selected
+  bool _isServiceSelected(Map<String, dynamic> service) {
+    final serviceName = service['service_name'] as String;
+    return selectedServices.containsKey(serviceName);
+  }
+
+  // Helper method to toggle service selection
+  void _toggleServiceSelection(Map<String, dynamic> service) {
+    final serviceName = service['service_name'] as String;
+
+    setState(() {
+      if (selectedServices.containsKey(serviceName)) {
+        // Service is selected, remove it
+        selectedServices.remove(serviceName);
+      } else {
+        // Service is not selected, add it
+        selectedServices[serviceName] = service;
+      }
     });
   }
 
@@ -127,9 +140,7 @@ class _SalonProfileState extends State<SalonProfile> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (error != null) {
@@ -139,10 +150,7 @@ class _SalonProfileState extends State<SalonProfile> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('Error: $error'),
-              ElevatedButton(
-                onPressed: _loadSalonData,
-                child: Text('Retry'),
-              ),
+              ElevatedButton(onPressed: _loadSalonData, child: Text('Retry')),
             ],
           ),
         ),
@@ -151,10 +159,10 @@ class _SalonProfileState extends State<SalonProfile> {
 
     final List<String> bannerImages = salonData?['banner_images'] != null
         ? (salonData!['banner_images'] as List)
-            .map((img) => img['image_link'] as String?)
-            .where((link) => link != null && link.isNotEmpty)
-            .cast<String>()
-            .toList()
+              .map((img) => img['image_link'] as String?)
+              .where((link) => link != null && link.isNotEmpty)
+              .cast<String>()
+              .toList()
         : ['https://placehold.co/300x200'];
 
     return Scaffold(
@@ -185,7 +193,11 @@ class _SalonProfileState extends State<SalonProfile> {
                             width: 50,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
-                              return Icon(Icons.store, size: 50, color: Colors.grey);
+                              return Icon(
+                                Icons.store,
+                                size: 50,
+                                color: Colors.grey,
+                              );
                             },
                           )
                         : Icon(Icons.store, size: 50, color: Colors.grey),
@@ -232,52 +244,56 @@ class _SalonProfileState extends State<SalonProfile> {
                 ],
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                height: 200,
-                child: PageView.builder(
-                  itemCount: bannerImages.length,
-                  controller: _pageController,
-                  itemBuilder: (context, index) {
-                    return AnimatedBuilder(
-                      animation: _pageController,
-                      builder: (context, child) {
-                        double value = 1.0;
-                        if (_pageController.hasClients && _pageController.position.hasPixels) {
-                          final currentPage = _pageController.page ?? 0.0;
-                          value = currentPage - index;
-                          value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
-                        } else {
-                          value = _pageController.initialPage.toDouble() - index;
-                          value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
-                        }
-                        return Transform.scale(
-                          scale: Curves.easeInOut.transform(value),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                bannerImages[index],
-                                fit: BoxFit.cover,
-                                width: 200,
-                                height: 200,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: Colors.grey,
-                                    child: Center(
-                                      child: Text('Image Error'),
-                                    ),
-                                  );
-                                },
+              if (selectedServices.isEmpty)...[
+                SizedBox(
+                  height: 200,
+                  child: PageView.builder(
+                    itemCount: bannerImages.length,
+                    controller: _pageController,
+                    itemBuilder: (context, index) {
+                      return AnimatedBuilder(
+                        animation: _pageController,
+                        builder: (context, child) {
+                          double value = 1.0;
+                          if (_pageController.hasClients &&
+                              _pageController.position.hasPixels) {
+                            final currentPage = _pageController.page ?? 0.0;
+                            value = currentPage - index;
+                            value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
+                          } else {
+                            value =
+                                _pageController.initialPage.toDouble() - index;
+                            value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
+                          }
+                          return Transform.scale(
+                            scale: Curves.easeInOut.transform(value),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  bannerImages[index],
+                                  fit: BoxFit.cover,
+                                  width: 200,
+                                  height: 200,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey,
+                                      child: Center(child: Text('Image Error')),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
+              ],
               const SizedBox(height: 24),
               const Text(
                 "Services",
@@ -286,15 +302,22 @@ class _SalonProfileState extends State<SalonProfile> {
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: ['All', 'Male', 'Female', 'Children', 'Unisex'].map((category) {
+                children: ['All', 'Male', 'Female', 'Children', 'Unisex'].map((
+                  category,
+                ) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2.0),
                     child: ElevatedButton(
                       onPressed: () => _updateServices(category),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedCategory == category ? Colors.black : Colors.grey,
+                        backgroundColor: selectedCategory == category
+                            ? Colors.black
+                            : Colors.grey,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0,
+                          vertical: 4.0,
+                        ),
                         textStyle: const TextStyle(fontSize: 12),
                       ),
                       child: Text(category),
@@ -305,29 +328,32 @@ class _SalonProfileState extends State<SalonProfile> {
               const SizedBox(height: 16),
               // Scrollable services section
               SizedBox(
-                height: 200, // Constrain the height of the services section
+                height: selectedServices.isEmpty ? null : 300, // Constrain the height of the services section
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
                       if (filteredServices.isEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          child: Text('No services available for ${selectedCategory.toLowerCase()} category'),
+                          child: Text(
+                            'No services available for ${selectedCategory.toLowerCase()} category',
+                          ),
                         )
                       else
                         ...filteredServices.map((service) {
                           final serviceName = service['service_name'] as String;
                           final price = service['price'] as int;
                           final duration = service['duration_minutes'] as int;
-                          final category = service['service_category'] as String?;
+                          final category =
+                              service['service_category'] as String?;
                           return CheckboxListTile(
                             title: Text(serviceName),
-                            subtitle: Text('Rs $price • ${duration} min${category != null ? ' • ${category.toUpperCase()}' : ''}'),
-                            value: selectedServices[serviceName] ?? false,
+                            subtitle: Text(
+                              'Rs $price • ${duration} min${category != null ? ' • ${category.toUpperCase()}' : ''}',
+                            ),
+                            value: _isServiceSelected(service),
                             onChanged: (bool? value) {
-                              setState(() {
-                                selectedServices[serviceName] = value ?? false;
-                              });
+                              _toggleServiceSelection(service);
                             },
                           );
                         }),
@@ -335,71 +361,121 @@ class _SalonProfileState extends State<SalonProfile> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Duration",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              // const SizedBox(height: 8),
+
+              // Show selected services summary if any are selected
+              if (selectedServices.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  Text(
-                    "${totalDuration ~/ 60} hours ${totalDuration % 60} min",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Total",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    "Rs $totalCost",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                onPressed: selectedServices.values.contains(true)
-                    ? () {
-                        final selectedServicesList = allServices
-                            .where((service) => selectedServices[service['service_name']] == true)
-                            .toList();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BookingScreen(
-                              salonId: widget.salonId,
-                              salonName: salonData?['salon_name'] ?? widget.salonName,
-                              selectedServices: selectedServicesList,
-                              totalCost: totalCost,
-                              totalDuration: totalDuration,
-                              salonData: salonData,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Selected Services (${selectedServices.length})',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      // const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: selectedServices.values.map((service) {
+                          return Chip(
+                            label: Text(
+                              service['service_name'],
+                              style: TextStyle(fontSize: 12),
                             ),
-                          ),
-                        );
-                      }
-                    : null,
-                child: const Text(
-                  "Proceed",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                            deleteIcon: Icon(Icons.close, size: 16),
+                            onDeleted: () => _toggleServiceSelection(service),
+                            backgroundColor: Colors.black,
+                            labelStyle: TextStyle(color: Colors.white),
+                            deleteIconColor: Colors.white,
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 16),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Duration",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      totalDuration >= 60
+                          ? "${totalDuration ~/ 60} ${totalDuration ~/ 60 == 1 ? 'hour' : 'hours'}${totalDuration % 60 > 0 ? ' ${totalDuration % 60} min' : ''}"
+                          : "${totalDuration} min",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Total",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      "Rs $totalCost",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: () {
+                    final selectedServicesList = selectedServices.values
+                        .toList();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BookingScreen(
+                          salonId: widget.salonId,
+                          salonName:
+                              salonData?['salon_name'] ?? widget.salonName,
+                          selectedServices: selectedServicesList,
+                          totalCost: totalCost,
+                          totalDuration: totalDuration,
+                          salonData: salonData,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Proceed",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
