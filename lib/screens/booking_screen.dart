@@ -33,7 +33,7 @@ class _BookingScreenState extends State<BookingScreen> {
   String? selectedStylistId;
   String selectedStylistName = 'None Selected';
   DateTime? selectedDate;
-  Map<String, dynamic>? selectedTimeSlot;
+  List<Map<String, dynamic>> selectedTimeSlots = [];
   bool isConfirmed = false;
   bool isLoadingStylists = true;
   bool isLoadingTimeSlots = false;
@@ -44,7 +44,7 @@ class _BookingScreenState extends State<BookingScreen> {
   List<Map<String, dynamic>> availableTimeSlots = [];
 
   // Calendar configuration
-  CalendarFormat _calendarFormat = CalendarFormat.week;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
 
   @override
@@ -91,8 +91,7 @@ class _BookingScreenState extends State<BookingScreen> {
         isLoadingTimeSlots = true;
         timeSlotsError = null;
         availableTimeSlots = [];
-        // Clear selected time slot when loading new slots
-        selectedTimeSlot = null;
+        selectedTimeSlots = [];
       });
 
       // Extract service IDs from selected services
@@ -125,20 +124,13 @@ class _BookingScreenState extends State<BookingScreen> {
 
   String _formatTimeSlot(Map<String, dynamic> slot) {
     try {
-      // Parse start and end times
+      // Assuming the slot has 'start' field in ISO format
       final startTime = DateTime.parse(slot['start']);
-      final endTime = DateTime.parse(slot['end']);
-
-      // Format times as HH:MM
-      final startFormatted =
-          '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
-      final endFormatted =
-          '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
-
-      return '$startFormatted - $endFormatted';
+      final hour = startTime.hour.toString().padLeft(2, '0');
+      final minute = startTime.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
     } catch (e) {
-      // Fallback if parsing fails
-      return '${slot['start']?.toString() ?? 'Start'} - ${slot['end']?.toString() ?? 'End'}';
+      return slot['start']?.toString() ?? 'Time';
     }
   }
 
@@ -230,7 +222,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         border: Border.all(color: Colors.green[200]!),
                       ),
                       child: Text(
-                        'Total: Rs ${widget.totalCost} • ${widget.totalDuration >= 60 ? '${widget.totalDuration ~/ 60} ${widget.totalDuration ~/ 60 == 1 ? 'hour' : 'hours'}${widget.totalDuration % 60 > 0 ? ' ${widget.totalDuration % 60} min' : ''}' : '${widget.totalDuration} min'}',
+                        'Total: Rs ${widget.totalCost} • ${widget.totalDuration ~/ 60} hours ${widget.totalDuration % 60} min',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.green[700],
@@ -305,11 +297,9 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 child: TableCalendar<dynamic>(
                   firstDay: DateTime.now(),
-                  lastDay: DateTime.now().add(Duration(days: 30)),
+                  lastDay: DateTime.now().add(Duration(days: 60)),
                   focusedDay: _focusedDay,
                   calendarFormat: _calendarFormat,
-                  startingDayOfWeek: StartingDayOfWeek.monday,
-                  headerVisible: true,
                   selectedDayPredicate: (day) {
                     return selectedDate != null &&
                         isSameDay(selectedDate!, day);
@@ -320,9 +310,8 @@ class _BookingScreenState extends State<BookingScreen> {
                       setState(() {
                         selectedDate = selectedDay;
                         _focusedDay = focusedDay;
-                        if (selectedTimeSlot != null) {
-                          selectedTimeSlot?.clear();
-                        }
+                        selectedTimeSlots
+                            .clear(); // Clear time slots when date changes
                       });
 
                       // Load time slots if both stylist and date are selected
@@ -356,7 +345,6 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   headerStyle: HeaderStyle(
                     formatButtonVisible: true,
-                    formatButtonShowsNext: false,
                     titleCentered: true,
                     formatButtonDecoration: BoxDecoration(
                       color: Colors.grey[200],
@@ -423,132 +411,83 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                 )
               else
-                // Changed from GridView to Column with single column layout
-                Container(
-                  constraints: BoxConstraints(
-                    maxHeight: 300, // Limit height to make it scrollable
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
                   ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: availableTimeSlots.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final timeSlot = entry.value;
-                        final timeDisplay = _formatTimeSlot(timeSlot);
-                        final isSelected = selectedTimeSlot == timeSlot;
+                  itemCount: availableTimeSlots.length,
+                  itemBuilder: (context, index) {
+                    final timeSlot = availableTimeSlots[index];
+                    final timeDisplay = _formatTimeSlot(timeSlot);
+                    final isSelected = selectedTimeSlots.contains(timeSlot);
 
-                        return Container(
-                          margin: EdgeInsets.only(bottom: 8),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height:
-                                45, // Increased height to accommodate both times
-                            child: ElevatedButton(
-                              onPressed: () {
-                                setState(() {
-                                  // Toggle selection - if same slot clicked, deselect it
-                                  if (isSelected) {
-                                    selectedTimeSlot = null;
-                                  } else {
-                                    // Select this slot (replacing any previous selection)
-                                    selectedTimeSlot = timeSlot;
-                                  }
-                                });
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isSelected
-                                    ? Colors.green[100]
-                                    : Colors.grey[200],
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                side: isSelected
-                                    ? BorderSide(color: Colors.green, width: 2)
-                                    : BorderSide(
-                                        color: Colors.grey[300]!,
-                                        width: 1,
-                                      ),
-                                elevation: isSelected ? 3 : 1,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.access_time,
-                                    size: 20,
-                                    color: isSelected
-                                        ? Colors.green[700]
-                                        : Colors.grey[600],
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text(
-                                    timeDisplay,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.w500,
-                                      color: isSelected
-                                          ? Colors.green[700]
-                                          : Colors.black87,
-                                    ),
-                                  ),
-                                  if (isSelected) ...[
-                                    SizedBox(width: 12),
-                                    Icon(
-                                      Icons.check_circle,
-                                      size: 20,
-                                      color: Colors.green[700],
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
+                    return ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          if (isSelected) {
+                            selectedTimeSlots.remove(timeSlot);
+                          } else {
+                            selectedTimeSlots.add(timeSlot);
+                          }
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isSelected
+                            ? Colors.green[100]
+                            : Colors.grey[200],
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(timeDisplay, style: TextStyle(fontSize: 12)),
+                    );
+                  },
                 ),
 
               SizedBox(height: 24),
 
               // Booking Details Section
-              // if (selectedTimeSlot != null)
-              // Container(
-              //   width: double.infinity,
-              //   padding: EdgeInsets.all(16),
-              //   decoration: BoxDecoration(
-              //     color: Colors.blue[50],
-              //     borderRadius: BorderRadius.circular(12),
-              //     border: Border.all(color: Colors.blue[200]!),
-              //   ),
-              //   child: Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: [
-              //       Text(
-              //         'Booking Summary',
-              //         style: TextStyle(
-              //           fontSize: 18,
-              //           fontWeight: FontWeight.bold,
-              //           color: Colors.black,
-              //         ),
-              //       ),
-              //       SizedBox(height: 12),
-              //       Text('Stylist: $selectedStylistName'),
-              //       Text('Date: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'),
-              //       Text('Time Slots: ${selectedTimeSlots.map((slot) => _formatTimeSlot(slot)).join(', ')}'),
-              //       Text('Total Price: Rs ${widget.totalCost}'),
-              //     ],
-              //   ),
-              // ),
-              SizedBox(height: 24),
+              if (selectedTimeSlots.isNotEmpty)
+                // Container(
+                //   width: double.infinity,
+                //   padding: EdgeInsets.all(16),
+                //   decoration: BoxDecoration(
+                //     color: Colors.blue[50],
+                //     borderRadius: BorderRadius.circular(12),
+                //     border: Border.all(color: Colors.blue[200]!),
+                //   ),
+                //   child: Column(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
+                //       Text(
+                //         'Booking Summary',
+                //         style: TextStyle(
+                //           fontSize: 18,
+                //           fontWeight: FontWeight.bold,
+                //           color: Colors.black,
+                //         ),
+                //       ),
+                //       SizedBox(height: 12),
+                //       Text('Stylist: $selectedStylistName'),
+                //       Text('Date: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'),
+                //       Text('Time Slots: ${selectedTimeSlots.map((slot) => _formatTimeSlot(slot)).join(', ')}'),
+                //       Text('Total Price: Rs ${widget.totalCost}'),
+                //     ],
+                //   ),
+                // ),
+                SizedBox(height: 24),
 
               // Confirm Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: selectedTimeSlot != null && !isConfirmed
+                  onPressed: selectedTimeSlots.isNotEmpty && !isConfirmed
                       ? () async {
                           setState(() {
                             isConfirmed = true;
@@ -559,7 +498,7 @@ class _BookingScreenState extends State<BookingScreen> {
                             listen: false,
                           );
                           final isLoggedIn = await authService.isLoggedIn();
-
+                          // print('User logged in: $isLoggedIn');
                           if (isLoggedIn) {
                             // User is logged in, proceed directly to confirmation
                             Navigator.push(
@@ -577,17 +516,16 @@ class _BookingScreenState extends State<BookingScreen> {
                                   date: selectedDate!,
                                   time: TimeOfDay(
                                     hour: DateTime.parse(
-                                      selectedTimeSlot!['start'],
+                                      selectedTimeSlots.first['start'],
                                     ).hour,
                                     minute: DateTime.parse(
-                                      selectedTimeSlot!['start'],
+                                      selectedTimeSlots.first['start'],
                                     ).minute,
                                   ),
                                   selectedEmployee: selectedStylistName,
-                                  // Pass single time slot as list for compatibility
-                                  selectedTimeSlots: [
-                                    _formatTimeSlot(selectedTimeSlot!),
-                                  ],
+                                  selectedTimeSlots: selectedTimeSlots
+                                      .map((slot) => _formatTimeSlot(slot))
+                                      .toList(),
                                   totalDuration: widget.totalDuration,
                                   totalPrice: widget.totalCost,
                                 ),
@@ -603,7 +541,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                 stylistName: selectedStylistName,
                                 selectedServices: widget.selectedServices,
                                 date: selectedDate!,
-                                timeSlot: selectedTimeSlot!,
+                                timeSlot: selectedTimeSlots.first,
                                 totalDuration: widget.totalDuration,
                                 totalPrice: widget.totalCost,
                               );
@@ -629,7 +567,9 @@ class _BookingScreenState extends State<BookingScreen> {
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Error storing booking data'),
+                                  content: Text(
+                                    'Error storing booking data',
+                                  ),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -650,7 +590,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                   ),
                   child: Text(
-                    selectedTimeSlot == null
+                    selectedTimeSlots.isEmpty
                         ? 'Select Time Slot to Continue'
                         : 'Proceed to Confirmation',
                     style: TextStyle(
@@ -688,8 +628,7 @@ class _BookingScreenState extends State<BookingScreen> {
         setState(() {
           selectedStylistId = stylistId;
           selectedStylistName = name;
-          // Clear selected time slot when changing stylist
-          selectedTimeSlot = null;
+          selectedTimeSlots.clear(); // Clear time slots when changing stylist
         });
 
         // Load time slots if both stylist and date are selected

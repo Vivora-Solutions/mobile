@@ -9,6 +9,7 @@ import 'package:book_my_salon/services/salon_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:book_my_salon/screens/user_profile.dart';
 import 'package:book_my_salon/screens/current_booking.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,12 +18,11 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   latLng.LatLng? _currentLocation;
   bool _isLoading = true;
   bool _isSearching = false;
-  bool _isSalonSectionExpanded = false; // Add state for expansion
-  bool _isLoggedinAlready = true;
+  bool _isSalonSectionExpanded = true;
 
   List<Map<String, dynamic>> _allSalons = [];
   List<Map<String, dynamic>> _displayedSalons = [];
@@ -30,20 +30,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   final TextEditingController _searchController = TextEditingController();
   final SalonService _salonService = SalonService();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   bool _useLocationBasedSearch = true;
-
-  final ScrollController _scrollController = ScrollController();
-  final double _lastScrollOffset = 0.0;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
     _fetchInitialData();
-    _isLoggedIn();
-
-    // Add listener for app lifecycle changes
-    WidgetsBinding.instance.addObserver(this);
+    _animationController.forward();
   }
 
   Future<void> _fetchInitialData() async {
@@ -264,7 +268,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _isSearching = true;
     });
 
-    // Filter from _allSalons directly (case-insensitive)
     final filteredResults = _allSalons.where((salon) {
       final salonName = (salon['salon_name'] ?? '').toString().toLowerCase();
       return salonName.contains(query.toLowerCase());
@@ -276,41 +279,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
-  Future<void> _isLoggedIn() async {
-    try {
-      final isLoggedIn = await AuthService().isLoggedIn();
-      setState(() {
-        _isLoggedinAlready = isLoggedIn;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoggedinAlready = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error checking login status: ${e.toString().replaceAll('Exception: ', '')}',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   Future<void> _logout() async {
     try {
       await AuthService().signOut();
-      // Update the state to reflect logout
-      setState(() {
-        _isLoggedinAlready = false;
-      });
-
-      // Optionally show a success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Logged out successfully'),
-          backgroundColor: Colors.green,
-        ),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -326,479 +300,607 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    const double searchBarHeight = 80.0;
+    final double bottomNavHeight = kBottomNavigationBarHeight +
+        MediaQuery.of(context).padding.bottom;
+    final double availableHeight = MediaQuery.of(context).size.height -
+        MediaQuery.of(context).padding.top -
+        searchBarHeight -
+        bottomNavHeight -
+        60.0;
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(
-          'VIVORA',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+        title: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 98, 98, 98), Color.fromARGB(255, 255, 255, 255)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds),
+          child: Text(
+            'SalonDora',
+            style: GoogleFonts.dancingScript(
+              fontSize: 30,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
-        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: Colors.black),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _refreshSalonsForLocation,
           ),
           IconButton(
-            icon: _isLoggedinAlready
-                ? Icon(Icons.logout, color: Colors.red)
-                : Icon(Icons.login, color: Colors.green),
-            onPressed: () async {
-              if (!_isLoggedinAlready) {
-                // Navigate to login and refresh when returning
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-
-                // Refresh login status when returning from login screen
-                _isLoggedIn();
-              } else {
-                // Show confirmation dialog
-                final shouldLogout = await showDialog<bool>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text('Logout'),
-                      content: Text('Are you sure you want to logout?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: Text('Logout'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-
-                if (shouldLogout == true) {
-                  _logout();
-                }
-              }
-            },
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: _logout,
           ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Search Field
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search a Salon...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+          : Stack(
+              children: [
+                Positioned.fill(
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter:
+                          _currentLocation ?? latLng.LatLng(6.9271, 79.8612),
+                      initialZoom: _useLocationBasedSearch ? 14.0 : 13.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c'],
+                        userAgentPackageName: 'com.example.book_my_salon',
                       ),
-                      suffixIcon: _isSearching
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                      MarkerLayer(
+                        markers: [
+                          if (_currentLocation != null)
+                            Marker(
+                              point: _currentLocation!,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.my_location,
+                                  color: Colors.white,
+                                  size: 20.0,
                                 ),
                               ),
-                            )
-                          : IconButton(
-                              icon: Icon(
-                                _searchController.text.isEmpty
-                                    ? Icons.search
-                                    : Icons.clear,
-                              ),
-                              onPressed: () {
-                                if (_searchController.text.isNotEmpty) {
-                                  _searchController.clear();
-                                  _searchSalons('');
-                                }
-                              },
                             ),
-                    ),
-                    onChanged: (value) {
-                      Future.delayed(const Duration(milliseconds: 500), () {
-                        if (_searchController.text == value) {
-                          _searchSalons(value);
-                        }
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Location status indicator
-                  if (_useLocationBasedSearch && _currentLocation != null)
-                    Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.green.shade200),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            color: Colors.green,
-                            size: 16,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Showing salons near your location',
-                            style: TextStyle(
-                              color: Colors.green[700],
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (_useLocationBasedSearch && _currentLocation != null)
-                    const SizedBox(height: 16),
-
-                  // Map (hidden when salon section is expanded)
-                  if (!_isSalonSectionExpanded)
-                    Expanded(
-                      flex: 2,
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter:
-                              _currentLocation ??
-                              latLng.LatLng(6.9271, 79.8612),
-                          initialZoom: _useLocationBasedSearch ? 14.0 : 13.0,
-                        ),
-                        children: [
-                          TileLayer(
-                            urlTemplate:
-                                'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            subdomains: ['a', 'b', 'c'],
-                            userAgentPackageName: 'com.example.book_my_salon',
-                          ),
-                          MarkerLayer(
-                            markers: [
-                              if (_currentLocation != null)
-                                Marker(
-                                  point: _currentLocation!,
+                          ..._displayedSalons.map((salon) {
+                            if (salon['latitude'] != null &&
+                                salon['longitude'] != null) {
+                              return Marker(
+                                point: latLng.LatLng(
+                                    salon['latitude'], salon['longitude']),
+                                child: GestureDetector(
+                                  onTap: () => _onSalonMarkerTapped(salon),
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.blue,
+                                      color: Colors.redAccent,
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: Colors.white,
                                         width: 2,
                                       ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.3),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
                                     ),
                                     child: const Icon(
-                                      Icons.my_location,
+                                      Icons.store,
                                       color: Colors.white,
                                       size: 20.0,
                                     ),
                                   ),
                                 ),
-                              ..._displayedSalons
-                                  .map((salon) {
-                                    if (salon['latitude'] != null &&
-                                        salon['longitude'] != null) {
-                                      return Marker(
-                                        point: latLng.LatLng(
-                                          salon['latitude'],
-                                          salon['longitude'],
-                                        ),
-                                        child: GestureDetector(
-                                          onTap: () =>
-                                              _onSalonMarkerTapped(salon),
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.red,
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: Colors.white,
-                                                width: 2,
-                                              ),
-                                            ),
-                                            child: const Icon(
-                                              Icons.store,
-                                              color: Colors.white,
-                                              size: 20.0,
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                    return null;
-                                  })
-                                  .where((marker) => marker != null)
-                                  .cast<Marker>(),
-                            ],
-                          ),
+                              );
+                            }
+                            return null;
+                          }).where((marker) => marker != null).cast<Marker>(),
                         ],
                       ),
-                    ),
-                  if (!_isSalonSectionExpanded) const SizedBox(height: 16),
-
-                  // Section heading with arrow icon
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            _searchController.text.isEmpty
-                                ? (_useLocationBasedSearch ? '' : 'All Salons')
-                                : 'Search Results (${_displayedSalons.length})',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          if (!_useLocationBasedSearch &&
-                              _searchController.text.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: IconButton(
-                                icon: Icon(
-                                  _isSalonSectionExpanded
-                                      ? Icons.keyboard_arrow_down
-                                      : Icons.keyboard_arrow_up,
-                                  size: 24,
-                                  color: Colors.black,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _isSalonSectionExpanded =
-                                        !_isSalonSectionExpanded;
-                                  });
-                                },
-                              ),
-                            ),
-                        ],
-                      ),
-                      if (_useLocationBasedSearch &&
-                          _displayedSalons.isNotEmpty)
-                        Text(
-                          '${_displayedSalons.length} found',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-
-                  // Salon list with NotificationListener for scroll detection
-                  Expanded(
-                    flex: _isSalonSectionExpanded ? 3 : 1,
-                    child: _displayedSalons.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.store, size: 64, color: Colors.grey),
-                                SizedBox(height: 16),
-                                Text(
-                                  _searchController.text.isEmpty
-                                      ? 'No salons available nearby'
-                                      : 'No salons found for "${_searchController.text}"',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey[600],
-                                  ),
+                ),
+                SafeArea(
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  spreadRadius: 5,
                                 ),
-                                if (_useLocationBasedSearch) ...[
-                                  SizedBox(height: 16),
-                                  ElevatedButton(
-                                    onPressed: () async {
-                                      setState(() {
-                                        _useLocationBasedSearch = false;
-                                      });
-                                      await _fetchSalons();
-                                    },
-                                    child: Text('Show All Salons'),
-                                  ),
-                                ],
                               ],
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                              ),
                             ),
-                          )
-                        : NotificationListener<ScrollNotification>(
-                            onNotification: (ScrollNotification scrollInfo) {
-                              if (scrollInfo is ScrollUpdateNotification) {
-                                final scrollDelta = scrollInfo.scrollDelta ?? 0;
-
-                                // Only trigger if scroll is significant (more than 5 pixels)
-                                if (scrollDelta.abs() > 5) {
-                                  if (scrollDelta > 0 &&
-                                      !_isSalonSectionExpanded) {
-                                    // Scrolling up - hide map
-                                    setState(() {
-                                      _isSalonSectionExpanded = true;
-                                    });
-                                  } else if (scrollDelta < 0 &&
-                                      _isSalonSectionExpanded) {
-                                    // Scrolling down - show map
-                                    setState(() {
-                                      _isSalonSectionExpanded = false;
-                                    });
-                                  }
-                                }
-                              }
-                              return false; // Allow the notification to continue
-                            },
-                            child: ListView.builder(
-                              controller: _scrollController,
-                              itemCount: _displayedSalons.length,
-                              itemBuilder: (context, index) {
-                                final salon = _displayedSalons[index];
-                                final distance = salon['distance'];
-
-                                return Card(
-                                  margin: EdgeInsets.only(bottom: 12),
-                                  child: ListTile(
-                                    leading: Container(
-                                      width: 50,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[300],
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: salon['salon_logo_link'] != null
-                                          ? ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              child: Image.network(
-                                                salon['salon_logo_link'],
-                                                fit: BoxFit.cover,
-                                                errorBuilder:
-                                                    (
-                                                      context,
-                                                      error,
-                                                      stackTrace,
-                                                    ) => Icon(
-                                                      Icons.store,
-                                                      color: Colors.grey[600],
-                                                    ),
-                                              ),
-                                            )
-                                          : Icon(
-                                              Icons.store,
-                                              color: Colors.grey[600],
-                                            ),
-                                    ),
-                                    title: Text(
-                                      salon['salon_name'] ?? 'Unknown Salon',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          salon['salon_address'] ??
-                                              'Address not available',
-                                          style: TextStyle(fontSize: 14),
+                            child: TextField(
+                              controller: _searchController,
+                              style: GoogleFonts.poppins(
+                                color: Colors.black87,
+                                fontSize: 16,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Search a Salon...',
+                                hintStyle: GoogleFonts.poppins(
+                                  color: Colors.grey[600],
+                                ),
+                                filled: true,
+                                fillColor: Colors.white.withOpacity(0.7),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                suffixIcon: _isSearching
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Padding(
+                                          padding: EdgeInsets.all(12.0),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(
+                                                Colors.purple),
+                                          ),
                                         ),
-                                        if (distance != null) ...[
-                                          SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.location_on,
-                                                size: 14,
-                                                color: Colors.blue,
-                                              ),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                '${(distance / 1000).toStringAsFixed(1)} km away',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.blue,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                        if (salon['average_rating'] !=
-                                            null) ...[
-                                          SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.star,
-                                                size: 14,
-                                                color: Colors.amber,
-                                              ),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                '${salon['average_rating'].toStringAsFixed(1)}',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                    trailing: Icon(
-                                      Icons.arrow_forward_ios,
-                                      size: 16,
-                                    ),
-                                    onTap: () => _onSalonMarkerTapped(salon),
-                                  ),
-                                );
+                                      )
+                                    : IconButton(
+                                        icon: Icon(
+                                          _searchController.text.isEmpty
+                                              ? Icons.search
+                                              : Icons.clear,
+                                          color: Colors.grey[600],
+                                        ),
+                                        onPressed: () {
+                                          if (_searchController.text.isNotEmpty) {
+                                            _searchController.clear();
+                                            _searchSalons('');
+                                          }
+                                        },
+                                      ),
+                              ),
+                              onChanged: (value) {
+                                Future.delayed(const Duration(milliseconds: 500),
+                                    () {
+                                  if (_searchController.text == value) {
+                                    _searchSalons(value);
+                                  }
+                                });
                               },
                             ),
                           ),
+                        ),
+                      ),
+                      AnimatedPositioned(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        top: _isSalonSectionExpanded
+                            ? searchBarHeight
+                            : availableHeight,
+                        left: 16,
+                        right: 16,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          constraints: BoxConstraints(
+                            minHeight: _isSalonSectionExpanded ? 0 : 80.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (!_isSalonSectionExpanded)
+                                Container(
+                                  width: 48,
+                                  height: 6,
+                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[400],
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0, vertical: 8.0),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          _searchController.text.isEmpty
+                                              ? (_useLocationBasedSearch
+                                                  ? 'Nearby Salons'
+                                                  : 'All Salons')
+                                              : 'Search Results (${_displayedSalons.length})',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          icon: Icon(
+                                            _isSalonSectionExpanded
+                                                ? Icons.keyboard_arrow_down
+                                                : Icons.keyboard_arrow_up,
+                                            size: 28,
+                                            color: const Color.fromARGB(255, 131, 129, 131),
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _isSalonSectionExpanded =
+                                                  !_isSalonSectionExpanded;
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    if (_useLocationBasedSearch &&
+                                        _displayedSalons.isNotEmpty &&
+                                        _isSalonSectionExpanded)
+                                      Text(
+                                        '${_displayedSalons.length} found',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (_isSalonSectionExpanded) ...[
+                                if (_useLocationBasedSearch &&
+                                    _currentLocation != null)
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: Colors.green.shade200),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.location_on,
+                                            color: Colors.green,
+                                            size: 16,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Showing salons near your location',
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.green[700],
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                SizedBox(
+                                  height: MediaQuery.of(context).size.height * 0.6,
+                                  child: _displayedSalons.isEmpty
+                                      ? Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.store,
+                                                size: 64,
+                                                color: Colors.grey[400],
+                                              ),
+                                              const SizedBox(height: 16),
+                                              Text(
+                                                _searchController.text.isEmpty
+                                                    ? 'No salons available nearby'
+                                                    : 'No salons found for "${_searchController.text}"',
+                                                textAlign: TextAlign.center,
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 16,
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                              if (_useLocationBasedSearch) ...[
+                                                const SizedBox(height: 16),
+                                                ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(8),
+                                                    ),
+                                                  ),
+                                                  onPressed: () async {
+                                                    setState(() {
+                                                      _useLocationBasedSearch =
+                                                          false;
+                                                    });
+                                                    await _fetchSalons();
+                                                  },
+                                                  child: Text(
+                                                    'Show All Salons',
+                                                    style: GoogleFonts.poppins(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        )
+                                      : ListView.builder(
+                                          itemCount: _displayedSalons.length,
+                                          itemBuilder: (context, index) {
+                                            final salon =
+                                                _displayedSalons[index];
+                                            final distance = salon['distance'];
+
+                                            return FadeTransition(
+                                              opacity: _fadeAnimation,
+                                              child: Card(
+                                                margin: const EdgeInsets.only(
+                                                    bottom: 12, left: 8, right: 8),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                elevation: 4,
+                                                child: ListTile(
+                                                  leading: Container(
+                                                    width: 50,
+                                                    height: 50,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[200],
+                                                      borderRadius:
+                                                          BorderRadius.circular(8),
+                                                    ),
+                                                    child: salon[
+                                                                'salon_logo_link'] !=
+                                                            null
+                                                        ? ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(8),
+                                                            child: Image.network(
+                                                              salon[
+                                                                  'salon_logo_link'],
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder: (
+                                                                context,
+                                                                error,
+                                                                stackTrace,
+                                                              ) =>
+                                                                  Icon(
+                                                                Icons.store,
+                                                                color: Colors
+                                                                    .grey[600],
+                                                              ),
+                                                            ),
+                                                          )
+                                                        : Icon(
+                                                            Icons.store,
+                                                            color:
+                                                                Colors.grey[600],
+                                                          ),
+                                                  ),
+                                                  title: Text(
+                                                    salon['salon_name'] ??
+                                                        'Unknown Salon',
+                                                    style: GoogleFonts.poppins(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 16,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                  subtitle: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        salon['salon_address'] ??
+                                                            'Address not available',
+                                                        style: GoogleFonts.poppins(
+                                                            fontSize: 14,
+                                                            color:
+                                                                Colors.grey[600]),
+                                                      ),
+                                                      if (distance != null) ...[
+                                                        const SizedBox(height: 4),
+                                                        Row(
+                                                          children: [
+                                                            const Icon(
+                                                              Icons.location_on,
+                                                              size: 14,
+                                                              color: Colors.blue,
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 4),
+                                                            Text(
+                                                              '${(distance / 1000).toStringAsFixed(1)} km away',
+                                                              style:
+                                                                  GoogleFonts.poppins(
+                                                                fontSize: 12,
+                                                                color: Colors.blue,
+                                                                fontWeight:
+                                                                    FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                      if (salon['average_rating'] !=
+                                                          null) ...[
+                                                        const SizedBox(height: 4),
+                                                        Row(
+                                                          children: [
+                                                            const Icon(
+                                                              Icons.star,
+                                                              size: 14,
+                                                              color: Colors.amber,
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 4),
+                                                            Text(
+                                                              '${salon['average_rating'].toStringAsFixed(1)}',
+                                                              style: GoogleFonts
+                                                                  .poppins(
+                                                                fontSize: 12,
+                                                                fontWeight:
+                                                                    FontWeight.w500,
+                                                                color: Colors
+                                                                    .black87,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                  ],
+                                                  ),
+                                                  trailing: const Icon(
+                                                    Icons.arrow_forward_ios,
+                                                    size: 16,
+                                                    color: Color.fromARGB(255, 0, 0, 0),
+                                                  ),
+                                                  onTap: () =>
+                                                      _onSalonMarkerTapped(salon),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'My Bookings'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-        currentIndex: 0,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey[500],
-        backgroundColor: Colors.white,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              break;
-            case 1:
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const CurrentBooking()),
-              );
-              break;
-            case 2:
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => UserProfile()),
-              );
-              break;
-          }
-        },
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.book),
+              label: 'My Bookings',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+          currentIndex: 0,
+          selectedItemColor: const Color.fromARGB(255, 96, 94, 94),
+          unselectedItemColor: Colors.grey[500],
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          selectedLabelStyle: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: GoogleFonts.poppins(),
+          onTap: (index) {
+            switch (index) {
+              case 0:
+                break;
+              case 1:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CurrentBooking()),
+                );
+                break;
+              case 2:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => UserProfile()),
+                );
+                break;
+            }
+          },
+        ),
       ),
     );
   }
@@ -806,18 +908,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     _searchController.dispose();
-    _scrollController.dispose();
-    WidgetsBinding.instance.removeObserver(this);
+    _animationController.dispose();
     super.dispose();
-  }
-
-  // Add this method to make the class implement WidgetsBindingObserver
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      // Refresh login status when app comes back into focus
-      _isLoggedIn();
-    }
   }
 }
