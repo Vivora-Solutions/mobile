@@ -1,8 +1,10 @@
+import 'package:book_my_salon/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 //import 'package:book_my_salon/screens/home_screen.dart';
 import 'package:book_my_salon/services/booking_service.dart';
 import 'package:book_my_salon/screens/payment_screen.dart';
+import 'package:book_my_salon/services/profile_service.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final String salonId;
@@ -35,7 +37,8 @@ class BookingConfirmationScreen extends StatefulWidget {
   });
 
   @override
-  _BookingConfirmationScreenState createState() => _BookingConfirmationScreenState();
+  _BookingConfirmationScreenState createState() =>
+      _BookingConfirmationScreenState();
 }
 
 class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
@@ -56,6 +59,26 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         _bookingError = null;
       });
 
+      // First, check if user has a phone number
+      final profile = await ProfileService().getUserProfile();
+      final customerData = profile['customer'] as Map<String, dynamic>?;
+      final contactNumber = customerData?['contact_number'];
+
+      // If no phone number, show popup to get it
+      if (contactNumber == null || contactNumber.toString().trim().isEmpty) {
+        final phoneNumber = await _showPhoneNumberDialog();
+        if (phoneNumber == null) {
+          // User cancelled the dialog
+          setState(() {
+            _isBooking = false;
+          });
+          return;
+        }
+
+        // Update phone number
+        await BookingService().updatePhone(phoneNumber);
+      }
+
       // Extract service IDs
       final serviceIds = widget.selectedServices
           .map((service) => service['service_id'].toString())
@@ -69,19 +92,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         widget.time.hour,
         widget.time.minute,
       );
-      
+
       // Send as ISO string without UTC conversion
       final bookingStartDateTime = bookingDateTime.toIso8601String();
-      
-      // OR if your backend expects a specific format, use:
-      // final bookingStartDateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(bookingDateTime);
 
       // Create the booking
       final result = await BookingService().createBooking(
         stylistId: widget.stylistId,
         serviceIds: serviceIds,
         bookingStartDateTime: bookingStartDateTime,
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
       );
 
       // Show success and navigate to home
@@ -95,7 +117,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => PaymentScreen()),
+          MaterialPageRoute(builder: (context) => HomeScreen()),
           (route) => false,
         );
       }
@@ -107,6 +129,78 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     }
   }
 
+  Future<String?> _showPhoneNumberDialog() async {
+    final TextEditingController phoneController = TextEditingController();
+    String? phoneError;
+
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false, // User must enter phone number
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Phone Number Required'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'We need your phone number to confirm your booking. This will be used for booking confirmations and updates.',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      labelText: 'Phone Number',
+                      hintText: 'Enter your phone number',
+                      border: OutlineInputBorder(),
+                      errorText: phoneError,
+                      prefixText: '+94 ',
+                    ),
+                    onChanged: (value) {
+                      if (phoneError != null) {
+                        setState(() {
+                          phoneError = null;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(null); // User cancelled
+                  },
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final phoneNumber = phoneController.text.trim();
+                    if (phoneNumber.isEmpty) {
+                      setState(() {
+                        phoneError = 'Phone number is required';
+                      });
+                      return;
+                    }
+
+                    // Optionally, you can add more validation for the phone number format
+
+                    Navigator.of(context).pop(phoneNumber);
+                  },
+                  child: Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Parse selected services for display
@@ -114,7 +208,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
     // Format date and time
     final formattedDate = DateFormat('EEEE, MMMM d, y').format(widget.date);
-    final startTime = '${widget.time.hour}:${widget.time.minute.toString().padLeft(2, '0')}';
+    final startTime =
+        '${widget.time.hour}:${widget.time.minute.toString().padLeft(2, '0')}';
     final endDateTime = DateTime(
       widget.date.year,
       widget.date.month,
@@ -122,7 +217,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       widget.time.hour,
       widget.time.minute,
     ).add(Duration(minutes: widget.totalDuration));
-    final endTime = '${endDateTime.hour}:${endDateTime.minute.toString().padLeft(2, '0')}';
+    final endTime =
+        '${endDateTime.hour}:${endDateTime.minute.toString().padLeft(2, '0')}';
 
     return SafeArea(
       child: Scaffold(
@@ -328,7 +424,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         controller: _notesController,
                         maxLines: 3,
                         decoration: InputDecoration(
-                          hintText: 'Add any special requests or notes for your booking...',
+                          hintText:
+                              'Add any special requests or notes for your booking...',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -390,7 +487,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 ),
                                 SizedBox(width: 12),
@@ -410,13 +509,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: TextButton(
-                      onPressed: _isBooking ? null : () => Navigator.pop(context),
+                      onPressed: _isBooking
+                          ? null
+                          : () => Navigator.pop(context),
                       child: Text(
                         'Go Back to Edit',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ),
                   ),
@@ -434,10 +532,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(color: Colors.grey[600]),
-        ),
+        Text(label, style: TextStyle(color: Colors.grey[600])),
         SizedBox(width: 16),
         Expanded(
           child: Text(
