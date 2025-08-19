@@ -1,10 +1,10 @@
 import 'package:book_my_salon/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-//import 'package:book_my_salon/screens/home_screen.dart';
 import 'package:book_my_salon/services/booking_service.dart';
-import 'package:book_my_salon/screens/payment_screen.dart';
+// import 'package:book_my_salon/screens/payment_screen.dart';
 import 'package:book_my_salon/services/profile_service.dart';
+import 'package:book_my_salon/screens/current_booking.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final String salonId;
@@ -117,7 +117,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => CurrentBooking()),
           (route) => false,
         );
       }

@@ -847,24 +847,27 @@ class _CurrentBookingState extends State<CurrentBooking> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        // TODO: Implement reschedule functionality
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Reschedule feature coming soon!'),
+                    Visibility(
+                      visible: false, // Hide reschedule button for now
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // TODO: Implement reschedule functionality
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Reschedule feature coming soon!'),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[200],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[200],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ),
-                      child: const Text(
-                        'Reschedule',
-                        style: TextStyle(color: Colors.black),
+                        child: const Text(
+                          'Reschedule',
+                          style: TextStyle(color: Colors.black),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
