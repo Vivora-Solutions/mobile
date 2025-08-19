@@ -17,21 +17,17 @@ class BookingService {
     _dio = AuthService().dio;
   }
 
-
   // Get eligible stylists for selected services
   Future<List<Map<String, dynamic>>> getEligibleStylists(
-    String salonId, 
-    List<String> serviceIds
+    String salonId,
+    List<String> serviceIds,
   ) async {
     try {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.post(
         '${ApiConstants.baseUrl}/bookings/eligible-stylists',
-        data: {
-          'salonId': salonId,
-          'serviceIds': serviceIds,
-        },
+        data: {'salonId': salonId, 'serviceIds': serviceIds},
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -51,7 +47,10 @@ class BookingService {
         // Token expired, try to refresh
         try {
           await AuthService().refreshAccessToken();
-          return getEligibleStylists(salonId, serviceIds); // Retry with new token
+          return getEligibleStylists(
+            salonId,
+            serviceIds,
+          ); // Retry with new token
         } catch (refreshError) {
           throw Exception('Authentication failed: Please login again');
         }
@@ -160,10 +159,14 @@ class BookingService {
         }
       }
       if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('Invalid booking data: ${e.response?.data['error'] ?? 'Bad request'}');
+        throw Exception(
+          'Invalid booking data: ${e.response?.data['error'] ?? 'Bad request'}',
+        );
       }
       if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+        throw Exception(
+          'Server error: ${e.response?.data['error'] ?? 'Internal server error'}',
+        );
       }
       throw Exception('Error creating booking: $e');
     }
@@ -200,10 +203,14 @@ class BookingService {
         }
       }
       if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('Bad request: ${e.response?.data['error'] ?? 'Invalid request'}');
+        throw Exception(
+          'Bad request: ${e.response?.data['error'] ?? 'Invalid request'}',
+        );
       }
       if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+        throw Exception(
+          'Server error: ${e.response?.data['error'] ?? 'Internal server error'}',
+        );
       }
       throw Exception('Error fetching bookings: $e');
     }
@@ -214,7 +221,7 @@ class BookingService {
     try {
       final token = await AuthService().getAccessToken();
 
-      final response = await _dio.put(  
+      final response = await _dio.put(
         '${ApiConstants.baseUrl}/bookings/$bookingId',
         options: Options(
           headers: {
@@ -236,29 +243,33 @@ class BookingService {
         }
       }
       if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('${e.response?.data['error'] ?? 'Cannot cancel booking'}');
+        throw Exception(
+          '${e.response?.data['error'] ?? 'Cannot cancel booking'}',
+        );
       }
       if (e is DioException && e.response?.statusCode == 404) {
         throw Exception('Booking not found or cannot be cancelled');
       }
       if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+        throw Exception(
+          'Server error: ${e.response?.data['error'] ?? 'Internal server error'}',
+        );
       }
       throw Exception('Error cancelling booking: $e');
     }
   }
 
   // Get booking history with pagination
-  Future<Map<String, dynamic>> getBookingHistory({int page = 1, int limit = 10}) async {
+  Future<Map<String, dynamic>> getBookingHistory({
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
         '${ApiConstants.baseUrl}/bookings/history',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: {'page': page, 'limit': limit},
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -273,18 +284,66 @@ class BookingService {
         // Token expired, try to refresh
         try {
           await AuthService().refreshAccessToken();
-          return getBookingHistory(page: page, limit: limit); // Retry with new token
+          return getBookingHistory(
+            page: page,
+            limit: limit,
+          ); // Retry with new token
         } catch (refreshError) {
           throw Exception('Authentication failed: Please login again');
         }
       }
       if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('Bad request: ${e.response?.data['error'] ?? 'Invalid request'}');
+        throw Exception(
+          'Bad request: ${e.response?.data['error'] ?? 'Invalid request'}',
+        );
       }
       if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+        throw Exception(
+          'Server error: ${e.response?.data['error'] ?? 'Internal server error'}',
+        );
       }
       throw Exception('Error fetching booking history: $e');
+    }
+  }
+
+  // Update phone number
+  Future<Map<String, dynamic>> updatePhone(String phoneNumber) async {
+    try {
+      final token = await AuthService().getAccessToken();
+
+      final response = await _dio.put(
+        '${ApiConstants.baseUrl}/auth/update-phone',
+        data: {'phone_number': phoneNumber},
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) {
+        // Token expired, try to refresh
+        try {
+          await AuthService().refreshAccessToken();
+          return updatePhone(phoneNumber); // Retry with new token
+        } catch (refreshError) {
+          throw Exception('Authentication failed: Please login again');
+        }
+      }
+      if (e is DioException && e.response?.statusCode == 400) {
+        throw Exception(
+          '${e.response?.data['error'] ?? 'Invalid phone number'}',
+        );
+      }
+      if (e is DioException && e.response?.statusCode == 500) {
+        throw Exception(
+          'Server error: ${e.response?.data['error'] ?? 'Internal server error'}',
+        );
+      }
+      throw Exception('Error updating phone number: $e');
     }
   }
 }
