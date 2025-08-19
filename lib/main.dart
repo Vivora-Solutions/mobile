@@ -28,6 +28,19 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: Colors.white,
           appBarTheme: const AppBarTheme(elevation: 0, centerTitle: true),
         ),
+        // home: FutureBuilder<bool>(
+        //  future: Future.wait([
+        //     AuthService().isLoggedIn(),
+        //     Future.delayed(const Duration(seconds: 3)),
+        //   ]).then((results) => results[0] as bool),
+        //   builder: (context, snapshot) {
+        //     if (snapshot.connectionState == ConnectionState.waiting) {
+        //       return const StartScreen();
+        //     }
+        //     final bool isLoggedIn = snapshot.data ?? false;
+        //     return isLoggedIn ? const HomeScreen() : const LoginScreen();
+        //   },
+        // ),
         home: const StartScreen(),
       ),
     );

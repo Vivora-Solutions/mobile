@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:book_my_salon/screens/home_screen.dart';
+import 'package:book_my_salon/screens/auth/login_screen.dart';
+import 'package:book_my_salon/services/auth_service.dart';
 import 'dart:async';
 
 class StartScreen extends StatefulWidget {
@@ -9,12 +11,12 @@ class StartScreen extends StatefulWidget {
   _StartScreenState createState() => _StartScreenState();
 }
 
-class _StartScreenState extends State<StartScreen>
-    with SingleTickerProviderStateMixin {
+class _StartScreenState extends State<StartScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _iconFadeAnimation;
   late Animation<double> _textFadeAnimation;
   late Animation<double> _creatorFadeAnimation;
+  bool? _isLoggedIn;
   bool _isNavigating = false;
 
   @override
@@ -54,24 +56,39 @@ class _StartScreenState extends State<StartScreen>
     });
 
     _controller.forward();
-    _navigateToHomeScreen();
+    _checkAuthAndNavigate();
   }
 
-  void _navigateToHomeScreen() async {
+  Future<void> _checkAuthAndNavigate() async {
+    if (_isNavigating) return;
+
+    // Check authentication in background
+    final authResult = await AuthService().isLoggedIn();
+    _isLoggedIn = authResult;
+
+    // Wait for animation to complete unless interrupted
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted && !_isNavigating) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => _isLoggedIn! ? const HomeScreen() : const LoginScreen(),
+        ),
+      );
+    }
+  }
+
+  void _navigateToHomeScreen() {
     if (_isNavigating) return;
     setState(() {
       _isNavigating = true;
     });
-
-    // Wait for animation to complete
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    }
+    _controller.stop();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
   }
 
   @override
@@ -84,21 +101,14 @@ class _StartScreenState extends State<StartScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: GestureDetector(
-        onTap: () {
-          if (_isNavigating) return;
-          setState(() {
-            _isNavigating = true;
-          });
-          _controller.stop();
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        },
+        onTap: _navigateToHomeScreen,
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color.fromARGB(255, 192, 191, 191), Colors.white],
+              colors: [
+                Color.fromARGB(255, 192, 191, 191),
+                Colors.white,
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
