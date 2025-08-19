@@ -57,21 +57,21 @@ class _SignupScreenState extends State<SignupScreen> {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Account created successfully!'),
+            content: Text('Account created successfully! Please login to continue.'),
             backgroundColor: Colors.green,
           ),
         );
 
-        // Check if we need to redirect to booking confirmation
-        if (widget.fromBooking) {
-          await _handleBookingRedirect();
-        } else {
-          // Normal signup flow - go to home screen
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        }
+        // Navigate to login screen with the email pre-filled
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LoginScreen(
+              fromBooking: widget.fromBooking, // Pass the booking flag
+              prefilledEmail: _emailController.text.trim(), // Pass the email
+            ),
+          ),
+        );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -87,71 +87,9 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  Future<void> _handleBookingRedirect() async {
-    try {
-      final bookingData = await BookingStorageService.getPendingBooking();
-      
-      if (bookingData != null) {
-        // Clear the stored data since we're using it now
-        await BookingStorageService.clearPendingBooking();
-        
-        // Navigate to booking confirmation screen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookingConfirmationScreen(
-              salonId: bookingData['salonId'],
-              salonName: bookingData['salonName'],
-              stylistId: bookingData['stylistId'],
-              stylistName: bookingData['stylistName'],
-              selectedServices: List<Map<String, dynamic>>.from(bookingData['selectedServices']),
-              service: (bookingData['selectedServices'] as List)
-                  .map((s) => s['service_name'])
-                  .join(', '),
-              date: DateTime.parse(bookingData['date']),
-              time: TimeOfDay(
-                hour: DateTime.parse(bookingData['timeSlot']['start']).hour,
-                minute: DateTime.parse(bookingData['timeSlot']['start']).minute,
-              ),
-              selectedEmployee: bookingData['stylistName'],
-              selectedTimeSlots: [_formatTimeSlot(bookingData['timeSlot'])],
-              totalDuration: bookingData['totalDuration'],
-              totalPrice: bookingData['totalPrice'],
-            ),
-          ),
-        );
-      } else {
-        // No booking data found, go to home screen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
-    } catch (e) {
-      // If there's an error, just go to home screen
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error retrieving booking data. Please try booking again.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    }
-  }
+  // Remove the _handleBookingRedirect method since we're going to login screen
 
-  String _formatTimeSlot(Map<String, dynamic> slot) {
-    try {
-      final startTime = DateTime.parse(slot['start']);
-      final hour = startTime.hour.toString().padLeft(2, '0');
-      final minute = startTime.minute.toString().padLeft(2, '0');
-      return '$hour:$minute';
-    } catch (e) {
-      return slot['start']?.toString() ?? 'Time';
-    }
-  }
+  // Remove the _formatTimeSlot method since we're going to login screen
 
   @override
   void dispose() {
@@ -302,7 +240,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                   // Signup Button
                   CustomButton(
-                    text: widget.fromBooking ? 'Create Account & Continue Booking' : 'Sign Up',
+                    text: widget.fromBooking ? 'Create Account' : 'Sign Up',
                     onPressed: _signup,
                     isLoading: _isLoading,
                   ),

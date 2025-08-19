@@ -44,7 +44,7 @@ class _BookingScreenState extends State<BookingScreen> {
   List<Map<String, dynamic>> availableTimeSlots = [];
 
   // Calendar configuration
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  CalendarFormat _calendarFormat = CalendarFormat.week;
   DateTime _focusedDay = DateTime.now();
 
   @override
@@ -230,7 +230,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         border: Border.all(color: Colors.green[200]!),
                       ),
                       child: Text(
-                        'Total: Rs ${widget.totalCost} • ${widget.totalDuration ~/ 60} hours ${widget.totalDuration % 60} min',
+                        'Total: Rs ${widget.totalCost} • ${widget.totalDuration >= 60 ? '${widget.totalDuration ~/ 60} ${widget.totalDuration ~/ 60 == 1 ? 'hour' : 'hours'}${widget.totalDuration % 60 > 0 ? ' ${widget.totalDuration % 60} min' : ''}' : '${widget.totalDuration} min'}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.green[700],
@@ -310,7 +310,6 @@ class _BookingScreenState extends State<BookingScreen> {
                   calendarFormat: _calendarFormat,
                   startingDayOfWeek: StartingDayOfWeek.monday,
                   headerVisible: true,
-
                   selectedDayPredicate: (day) {
                     return selectedDate != null &&
                         isSameDay(selectedDate!, day);
@@ -357,6 +356,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   headerStyle: HeaderStyle(
                     formatButtonVisible: true,
+                    formatButtonShowsNext: false,
                     titleCentered: true,
                     formatButtonDecoration: BoxDecoration(
                       color: Colors.grey[200],
@@ -441,7 +441,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           child: SizedBox(
                             width: double.infinity,
                             height:
-                                60, // Increased height to accommodate both times
+                                45, // Increased height to accommodate both times
                             child: ElevatedButton(
                               onPressed: () {
                                 setState(() {
