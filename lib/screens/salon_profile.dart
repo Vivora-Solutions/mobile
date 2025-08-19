@@ -244,54 +244,56 @@ class _SalonProfileState extends State<SalonProfile> {
                 ],
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                height: 200,
-                child: PageView.builder(
-                  itemCount: bannerImages.length,
-                  controller: _pageController,
-                  itemBuilder: (context, index) {
-                    return AnimatedBuilder(
-                      animation: _pageController,
-                      builder: (context, child) {
-                        double value = 1.0;
-                        if (_pageController.hasClients &&
-                            _pageController.position.hasPixels) {
-                          final currentPage = _pageController.page ?? 0.0;
-                          value = currentPage - index;
-                          value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
-                        } else {
-                          value =
-                              _pageController.initialPage.toDouble() - index;
-                          value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
-                        }
-                        return Transform.scale(
-                          scale: Curves.easeInOut.transform(value),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                bannerImages[index],
-                                fit: BoxFit.cover,
-                                width: 200,
-                                height: 200,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: Colors.grey,
-                                    child: Center(child: Text('Image Error')),
-                                  );
-                                },
+              if (selectedServices.isEmpty)...[
+                SizedBox(
+                  height: 200,
+                  child: PageView.builder(
+                    itemCount: bannerImages.length,
+                    controller: _pageController,
+                    itemBuilder: (context, index) {
+                      return AnimatedBuilder(
+                        animation: _pageController,
+                        builder: (context, child) {
+                          double value = 1.0;
+                          if (_pageController.hasClients &&
+                              _pageController.position.hasPixels) {
+                            final currentPage = _pageController.page ?? 0.0;
+                            value = currentPage - index;
+                            value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
+                          } else {
+                            value =
+                                _pageController.initialPage.toDouble() - index;
+                            value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
+                          }
+                          return Transform.scale(
+                            scale: Curves.easeInOut.transform(value),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  bannerImages[index],
+                                  fit: BoxFit.cover,
+                                  width: 200,
+                                  height: 200,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey,
+                                      child: Center(child: Text('Image Error')),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
+              ],
               const SizedBox(height: 24),
               const Text(
                 "Services",
@@ -326,7 +328,7 @@ class _SalonProfileState extends State<SalonProfile> {
               const SizedBox(height: 16),
               // Scrollable services section
               SizedBox(
-                height: 200, // Constrain the height of the services section
+                height: selectedServices.isEmpty ? null : 300, // Constrain the height of the services section
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
@@ -359,7 +361,7 @@ class _SalonProfileState extends State<SalonProfile> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              // const SizedBox(height: 8),
 
               // Show selected services summary if any are selected
               if (selectedServices.isNotEmpty) ...[
@@ -380,7 +382,7 @@ class _SalonProfileState extends State<SalonProfile> {
                           color: Colors.grey[700],
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      // const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 4,
