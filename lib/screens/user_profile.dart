@@ -250,7 +250,7 @@ class _UserProfileState extends State<UserProfile> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'VIVORA',
+          'My Profile',
           style: TextStyle(
             color: Colors.black,
             fontSize: 24,
@@ -396,13 +396,13 @@ class _UserProfileState extends State<UserProfile> {
                   ),
                 ),
                 SizedBox(height: 8),
-                Text(
-                  'Profile',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                // Text(
+                //   'Profile',
+                //   style: TextStyle(
+                //     fontSize: 20,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
               ],
             ),
           ),
