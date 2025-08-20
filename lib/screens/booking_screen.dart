@@ -426,7 +426,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 // Changed from GridView to Column with single column layout
                 Container(
                   constraints: BoxConstraints(
-                    maxHeight: 300, // Limit height to make it scrollable
+                    maxHeight: 330, // Limit height to make it scrollable
                   ),
                   child: SingleChildScrollView(
                     child: Column(
@@ -511,38 +511,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                 ),
 
-              SizedBox(height: 24),
-
-              // Booking Details Section
-              // if (selectedTimeSlot != null)
-              // Container(
-              //   width: double.infinity,
-              //   padding: EdgeInsets.all(16),
-              //   decoration: BoxDecoration(
-              //     color: Colors.blue[50],
-              //     borderRadius: BorderRadius.circular(12),
-              //     border: Border.all(color: Colors.blue[200]!),
-              //   ),
-              //   child: Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: [
-              //       Text(
-              //         'Booking Summary',
-              //         style: TextStyle(
-              //           fontSize: 18,
-              //           fontWeight: FontWeight.bold,
-              //           color: Colors.black,
-              //         ),
-              //       ),
-              //       SizedBox(height: 12),
-              //       Text('Stylist: $selectedStylistName'),
-              //       Text('Date: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'),
-              //       Text('Time Slots: ${selectedTimeSlots.map((slot) => _formatTimeSlot(slot)).join(', ')}'),
-              //       Text('Total Price: Rs ${widget.totalCost}'),
-              //     ],
-              //   ),
-              // ),
-              SizedBox(height: 24),
+              SizedBox(height: 20),
 
               // Confirm Button
               SizedBox(
