@@ -190,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // App Logo/Title
                   Text(
-                    'Book My Salon',
+                    'SalonDora',
                     style: AppStyles.headingStyle,
                     textAlign: TextAlign.center,
                   ),

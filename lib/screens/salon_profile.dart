@@ -172,14 +172,14 @@ class _SalonProfileState extends State<SalonProfile> {
           child: ListView(
             children: [
               Center(
-                child: Text(
-                  "VIVORA",
-                  style: TextStyle(
-                    fontFamily: 'VivoraFont',
-                    fontSize: 28,
-                    color: Colors.black,
-                  ),
-                ),
+                // child: Text(
+                //   "VIVORA",
+                //   style: TextStyle(
+                //     fontFamily: 'VivoraFont',
+                //     fontSize: 28,
+                //     color: Colors.black,
+                //   ),
+                // ),
               ),
               const SizedBox(height: 10),
               Row(

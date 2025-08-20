@@ -235,14 +235,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             children: [
               // Header
               Center(
-                child: Text(
-                  'VIVORA',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
+                // child: Text(
+                //   'VIVORA',
+                //   style: TextStyle(
+                //     fontSize: 32,
+                //     fontWeight: FontWeight.bold,
+                //     color: Colors.black,
+                //   ),
+                // ),
               ),
               SizedBox(height: 20),
 
