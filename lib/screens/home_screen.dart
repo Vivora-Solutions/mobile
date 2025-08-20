@@ -23,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen>
   latLng.LatLng? _currentLocation;
   bool _isLoading = true;
   bool _isSearching = false;
-  bool _isSalonSectionExpanded = true;
+  bool _isSalonSectionExpanded = false;
   bool _isLoggedinAlready = true;
 
   List<Map<String, dynamic>> _allSalons = [];
@@ -609,8 +609,9 @@ class _HomeScreenState extends State<HomeScreen>
                         top: _isSalonSectionExpanded
                             ? searchBarHeight
                             : availableHeight,
-                        left: 16,
-                        right: 16,
+                        left: 3,
+                        right: 3,
+                        bottom: _isSalonSectionExpanded ? 0 : null,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
@@ -657,7 +658,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         Text(
                                           _searchController.text.isEmpty
                                               ? (_useLocationBasedSearch
-                                                    ? 'Nearby Salons'
+                                                    ? ''
                                                     : 'All Salons')
                                               : 'Search Results (${_displayedSalons.length})',
                                           style: GoogleFonts.poppins(
@@ -736,9 +737,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       ),
                                     ),
                                   ),
-                                SizedBox(
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.6,
+                                Expanded(
                                   child: _displayedSalons.isEmpty
                                       ? Center(
                                           child: Column(
