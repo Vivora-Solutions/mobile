@@ -12,9 +12,7 @@ class StartScreen extends StatefulWidget {
 class _StartScreenState extends State<StartScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _iconFadeAnimation;
-  late Animation<double> _textFadeAnimation;
-  late Animation<double> _creatorFadeAnimation;
+  late Animation<double> _fadeAnimation;
   bool _isNavigating = false;
 
   @override
@@ -25,27 +23,11 @@ class _StartScreenState extends State<StartScreen>
       duration: const Duration(seconds: 2),
     );
 
-    // Fade-in animation for icon
-    _iconFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    // Fade animation: fade in first half, fade out second half
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.4, curve: Curves.easeInOut),
-      ),
-    );
-
-    // Fade-in animation for "Book My Salon"
-    _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.3, 0.7, curve: Curves.easeInOut),
-      ),
-    );
-
-    // Fade-in animation for "Created by VIVORA Solutions"
-    _creatorFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.6, 1.0, curve: Curves.easeInOut),
+        curve: Curves.easeInOut,
       ),
     );
 
@@ -53,19 +35,26 @@ class _StartScreenState extends State<StartScreen>
       setState(() {});
     });
 
-    _controller.forward();
-    _navigateToHomeScreen();
+    // Start the animation and navigation
+    _startAnimation();
   }
 
-  void _navigateToHomeScreen() async {
+  void _startAnimation() async {
     if (_isNavigating) return;
     setState(() {
       _isNavigating = true;
     });
 
-    // Wait for animation to complete
-    await Future.delayed(const Duration(seconds: 2));
+    // Fade in for 1 second
+    await _controller.animateTo(1.0, duration: const Duration(seconds: 1));
+    
+    // Hold for a brief moment
+    await Future.delayed(const Duration(milliseconds: 200));
+    
+    // Fade out for 0.8 seconds
+    await _controller.animateBack(0.0, duration: const Duration(milliseconds: 800));
 
+    // Navigate to home screen
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -86,9 +75,6 @@ class _StartScreenState extends State<StartScreen>
       body: GestureDetector(
         onTap: () {
           if (_isNavigating) return;
-          setState(() {
-            _isNavigating = true;
-          });
           _controller.stop();
           Navigator.pushReplacement(
             context,
@@ -98,64 +84,37 @@ class _StartScreenState extends State<StartScreen>
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color.fromARGB(255, 192, 191, 191), Colors.white],
+              colors: [Color.fromARGB(255, 255, 255, 255), Colors.white],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
           ),
-          child: Stack(
-            children: [
-              // Icon at top center
-              Positioned(
-                top: MediaQuery.of(context).size.height * 0.3,
-                child: FadeTransition(
-                  opacity: _iconFadeAnimation,
-                  child: const Icon(
-                    Icons.content_cut, // Scissors icon for salon theme
-                    size: 80,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              // "Book My Salon" in center
-              Center(
-                child: FadeTransition(
-                  opacity: _textFadeAnimation,
-                  child: Text(
-                    'Book My Salon',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 60,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black26,
-                          offset: const Offset(2.0, 2.0),
-                          blurRadius: 4.0,
-                        ),
-                      ],
+          child: Center(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Image.asset(
+                'images/icon.jpg',
+                height: 200,
+                width: 200,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback if image doesn't load
+                  return Container(
+                    height: 200,
+                    width: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ),
-                ),
-              ),
-              // "Created by VIVORA Solutions" at bottom right
-              Positioned(
-                right: 16,
-                bottom: 16,
-                child: FadeTransition(
-                  opacity: _creatorFadeAnimation,
-                  child: Text(
-                    'Created by VIVORA Solutions',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
+                    child: const Icon(
+                      Icons.content_cut,
+                      size: 80,
                       color: Colors.black54,
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
-            ],
+            ),
           ),
         ),
       ),

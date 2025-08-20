@@ -338,22 +338,37 @@ class _HomeScreenState extends State<HomeScreen>
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [
-              Color.fromARGB(255, 0, 0, 0),
-              Color.fromARGB(255, 98, 98, 98),
-              Color.fromARGB(255, 255, 255, 255),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ).createShader(bounds),
-          child: Text(
-            'SalonDora',
-            style: GoogleFonts.dancingScript(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+        toolbarHeight: 60.0,
+        title: Container(
+          height: 60,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 17.0),
+            child: Image.asset(
+              'images/header.jpg',
+              height: 40,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback to text if image doesn't load
+                return ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [
+                      Color.fromARGB(255, 0, 0, 0),
+                      Color.fromARGB(255, 98, 98, 98),
+                      Color.fromARGB(255, 255, 255, 255),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+                  child: Text(
+                    'SalonDora',
+                    style: GoogleFonts.dancingScript(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),

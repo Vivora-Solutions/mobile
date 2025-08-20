@@ -204,57 +204,57 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 50),
 
-                  // Social Login Button (Optional)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Google login not implemented yet'),
-                          ),
-                        );
-                      },
-                      icon: Image.network(
-                        'https://www.google.com/favicon.ico',
-                        width: 24,
-                        height: 24,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.login, size: 24);
-                        },
-                      ),
-                      label: const Text('Continue with Google'),
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        backgroundColor: const Color.fromARGB(
-                          255,
-                          183,
-                          183,
-                          183,
-                        ),
-                        side: const BorderSide(color: Colors.grey),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
+                  // // Social Login Button (Optional)
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   child: ElevatedButton.icon(
+                  //     onPressed: () {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         const SnackBar(
+                  //           content: Text('Google login not implemented yet'),
+                  //         ),
+                  //       );
+                  //     },
+                  //     icon: Image.network(
+                  //       'https://www.google.com/favicon.ico',
+                  //       width: 24,
+                  //       height: 24,
+                  //       fit: BoxFit.cover,
+                  //       errorBuilder: (context, error, stackTrace) {
+                  //         return const Icon(Icons.login, size: 24);
+                  //       },
+                  //     ),
+                  //     label: const Text('Continue with Google'),
+                  //     style: ElevatedButton.styleFrom(
+                  //       foregroundColor: Colors.black,
+                  //       backgroundColor: const Color.fromARGB(
+                  //         255,
+                  //         183,
+                  //         183,
+                  //         183,
+                  //       ),
+                  //       side: const BorderSide(color: Colors.grey),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(8),
+                  //       ),
+                  //       padding: const EdgeInsets.symmetric(vertical: 12),
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 30),
 
-                  // OR Divider
-                  Row(
-                    children: [
-                      const Expanded(child: Divider(color: Colors.white)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('OR', style: AppStyles.subHeadingStyle),
-                      ),
-                      const Expanded(child: Divider(color: Colors.white)),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
+                  // // OR Divider
+                  // Row(
+                  //   children: [
+                  //     const Expanded(child: Divider(color: Colors.white)),
+                  //     Padding(
+                  //       padding: const EdgeInsets.symmetric(horizontal: 16),
+                  //       child: Text('OR', style: AppStyles.subHeadingStyle),
+                  //     ),
+                  //     const Expanded(child: Divider(color: Colors.white)),
+                  //   ],
+                  // ),
+                  // const SizedBox(height: 30),
 
                   // Email Field
                   CustomTextField(
