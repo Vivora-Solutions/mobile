@@ -5,7 +5,7 @@ import 'package:book_my_salon/screens/user_profile.dart';
 import 'package:book_my_salon/screens/auth/login_screen.dart'; // Add this import
 import 'package:book_my_salon/services/auth_service.dart'; // Add this import
 import 'package:intl/intl.dart';
-import 'package:book_my_salon/services/booking_service.dart'; 
+import 'package:book_my_salon/services/booking_service.dart';
 
 class CurrentBooking extends StatefulWidget {
   const CurrentBooking({Key? key}) : super(key: key);
@@ -16,9 +16,12 @@ class CurrentBooking extends StatefulWidget {
 
 class _CurrentBookingState extends State<CurrentBooking> {
   List<Map<String, dynamic>> bookings = [];
+  List<Map<String, dynamic>> filteredBookings =
+      []; // Add filtered bookings list
   bool isLoading = true;
   String? errorMessage;
-  bool isLoggedIn = false; // Add this flag
+  bool isLoggedIn = false;
+  String selectedFilter = 'All'; // Add filter state
 
   @override
   void initState() {
@@ -36,7 +39,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
 
       // Check if user is logged in
       final authStatus = await AuthService().isLoggedIn();
-      
+
       if (!authStatus) {
         setState(() {
           isLoggedIn = false;
@@ -68,13 +71,42 @@ class _CurrentBookingState extends State<CurrentBooking> {
 
       final fetchedBookings = await BookingService().getUserBookings();
 
+      // Filter out past bookings and sort by most recent
+      final now = DateTime.now();
+      final currentBookings = fetchedBookings.where((booking) {
+        try {
+          final bookingDate = DateTime.parse(booking['booking_start_datetime']);
+          // Only show bookings that are today or in the future
+          return bookingDate.isAfter(
+            now.subtract(Duration(hours: 1)),
+          ); // 1 hour buffer for ongoing bookings
+        } catch (e) {
+          return false; // Exclude bookings with invalid dates
+        }
+      }).toList();
+
+      // Sort by booking start datetime (most recent first)
+      currentBookings.sort((a, b) {
+        try {
+          final dateA = DateTime.parse(a['booking_start_datetime']);
+          final dateB = DateTime.parse(b['booking_start_datetime']);
+          return dateA.compareTo(dateB); // Earliest upcoming bookings first
+        } catch (e) {
+          return 0;
+        }
+      });
+
       setState(() {
-        bookings = fetchedBookings;
+        bookings = currentBookings;
+        filteredBookings = currentBookings; // Initialize filtered list
         isLoading = false;
       });
+
+      // Apply current filter
+      _applyFilter(selectedFilter);
     } catch (e) {
       // Check if it's an authentication error
-      if (e.toString().contains('Authentication failed') || 
+      if (e.toString().contains('Authentication failed') ||
           e.toString().contains('Please login again')) {
         setState(() {
           isLoggedIn = false;
@@ -89,6 +121,31 @@ class _CurrentBookingState extends State<CurrentBooking> {
     }
   }
 
+  // Add filter method
+  void _applyFilter(String filter) {
+    setState(() {
+      selectedFilter = filter;
+
+      switch (filter) {
+        case 'Pending':
+          filteredBookings = bookings.where((booking) {
+            final status = booking['status']?.toString().toLowerCase() ?? '';
+            return status == 'pending';
+          }).toList();
+          break;
+        case 'Confirmed':
+          filteredBookings = bookings.where((booking) {
+            final status = booking['status']?.toString().toLowerCase() ?? '';
+            return status == 'confirmed';
+          }).toList();
+          break;
+        default: // 'All'
+          filteredBookings = List.from(bookings);
+          break;
+      }
+    });
+  }
+
   // Refresh method that checks auth status
   Future<void> _refreshBookings() async {
     await _checkAuthAndLoadBookings();
@@ -98,11 +155,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
   void _navigateToLogin() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => LoginScreen(
-          fromBooking: false,
-        ),
-      ),
+      MaterialPageRoute(builder: (context) => LoginScreen(fromBooking: false)),
     ).then((_) {
       // Refresh when user comes back from login
       _checkAuthAndLoadBookings();
@@ -110,7 +163,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
   }
 
   // ...existing methods remain the same...
-  
+
   // Check if booking can be cancelled based on business rules
   bool _canCancelBooking(Map<String, dynamic> booking) {
     try {
@@ -189,9 +242,11 @@ class _CurrentBookingState extends State<CurrentBooking> {
       // Close loading dialog
       Navigator.of(context).pop();
 
-      // Remove from local list or update status
+      // Remove from both lists
+      final bookingToRemove = filteredBookings[index];
       setState(() {
-        bookings.removeAt(index);
+        bookings.removeWhere((booking) => booking['booking_id'] == bookingId);
+        filteredBookings.removeAt(index);
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -223,7 +278,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
   }
 
   void _showCancelConfirmation(String bookingId, int index) {
-    final booking = bookings[index];
+    final booking = filteredBookings[index]; // Use filtered bookings
     final canCancel = _canCancelBooking(booking);
     final message = _getCancellationMessage(booking);
     final salon = booking['salon'] as Map<String, dynamic>?;
@@ -404,8 +459,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
         return 'Pending Confirmation';
       case 'confirmed':
         return 'Confirmed';
-      case 'in_progress':
-        return 'In Progress';
       default:
         return status;
     }
@@ -417,8 +470,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
         return Colors.orange;
       case 'confirmed':
         return Colors.green;
-      case 'in_progress':
-        return Colors.blue;
       default:
         return Colors.grey;
     }
@@ -429,7 +480,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'VIVORA',
+          'Current Bookings',
           style: TextStyle(
             color: Colors.black,
             fontSize: 24,
@@ -441,7 +492,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: Colors.black),
-            onPressed: _refreshBookings, // Updated to use the new refresh method
+            onPressed: _refreshBookings,
           ),
         ],
       ),
@@ -450,27 +501,113 @@ class _CurrentBookingState extends State<CurrentBooking> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Ongoing Bookings',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+            // Filter chips - only show if logged in and have bookings
+            if (isLoggedIn && bookings.isNotEmpty)
+              Container(
+                margin: EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Filter by Status',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Text(
+                          '${filteredBookings.length} booking${filteredBookings.length != 1 ? 's' : ''}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: ['All', 'Pending', 'Confirmed']
+                            .map((filter) {
+                              final isSelected = selectedFilter == filter;
+
+                              // Count bookings for each filter
+                              int count = 0;
+                              switch (filter) {
+                                case 'Pending':
+                                  count = bookings
+                                      .where(
+                                        (b) =>
+                                            b['status']
+                                                ?.toString()
+                                                .toLowerCase() ==
+                                            'pending',
+                                      )
+                                      .length;
+                                  break;
+                                case 'Confirmed':
+                                  count = bookings
+                                      .where(
+                                        (b) =>
+                                            b['status']
+                                                ?.toString()
+                                                .toLowerCase() ==
+                                            'confirmed',
+                                      )
+                                      .length;
+                                  break;
+                                default:
+                                  count = bookings.length;
+                                  break;
+                              }
+
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: FilterChip(
+                                  label: Text(
+                                    '$filter ($count)',
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.black,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    _applyFilter(filter);
+                                  },
+                                  backgroundColor: Colors.grey[200],
+                                  selectedColor: Colors.black,
+                                  checkmarkColor: Colors.white,
+                                ),
+                              );
+                            })
+                            .toList(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
 
             // Loading, Error, Login Required, or Content
             Expanded(
               child: isLoading
                   ? Center(child: CircularProgressIndicator())
                   : !isLoggedIn
-                      ? _buildLoginRequiredWidget() // New widget for login required
-                      : errorMessage != null
-                          ? _buildErrorWidget()
-                          : bookings.isEmpty
-                              ? _buildEmptyWidget()
-                              : _buildBookingsList(),
+                  ? _buildLoginRequiredWidget()
+                  : errorMessage != null
+                  ? _buildErrorWidget()
+                  : filteredBookings.isEmpty
+                  ? _buildEmptyWidget()
+                  : _buildBookingsList(),
             ),
 
             // View Booking History Button - only show if logged in
@@ -483,7 +620,9 @@ class _CurrentBookingState extends State<CurrentBooking> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => BookingHistory()),
+                        MaterialPageRoute(
+                          builder: (context) => BookingHistory(),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -621,7 +760,26 @@ class _CurrentBookingState extends State<CurrentBooking> {
     );
   }
 
+  // Update empty widget to show different messages based on filter
   Widget _buildEmptyWidget() {
+    String message;
+    String description;
+
+    switch (selectedFilter) {
+      case 'Pending':
+        message = 'No Pending Bookings';
+        description = 'You don\'t have any pending bookings at the moment';
+        break;
+      case 'Confirmed':
+        message = 'No Confirmed Bookings';
+        description = 'You don\'t have any confirmed bookings at the moment';
+        break;
+      default:
+        message = 'No Current Bookings';
+        description = 'You don\'t have any upcoming bookings at the moment';
+        break;
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -629,15 +787,23 @@ class _CurrentBookingState extends State<CurrentBooking> {
           Icon(Icons.calendar_today, size: 64, color: Colors.grey),
           SizedBox(height: 16),
           Text(
-            'No Current Bookings',
+            message,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
           Text(
-            'You don\'t have any ongoing bookings at the moment',
+            description,
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey[600]),
           ),
+          if (selectedFilter != 'All')
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: TextButton(
+                onPressed: () => _applyFilter('All'),
+                child: Text('View All Bookings'),
+              ),
+            ),
           SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
@@ -656,9 +822,9 @@ class _CurrentBookingState extends State<CurrentBooking> {
 
   Widget _buildBookingsList() {
     return ListView.builder(
-      itemCount: bookings.length,
+      itemCount: filteredBookings.length, // Use filtered bookings
       itemBuilder: (context, index) {
-        final booking = bookings[index];
+        final booking = filteredBookings[index]; // Use filtered bookings
         final salon = booking['salon'] as Map<String, dynamic>?;
         final stylist = booking['stylist'] as Map<String, dynamic>?;
         final canCancel = _canCancelBooking(booking);
@@ -903,4 +1069,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
       },
     );
   }
+
+
 }
