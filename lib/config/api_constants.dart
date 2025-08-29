@@ -15,7 +15,7 @@ class ApiConstants {
   //    }
   //  }
 
-  static const String baseUrl = 'https://backend-2-o7e5.onrender.com/api';
+  static const String baseUrl = 'http://13.48.10.128/api';
   // static const String _devBaseUrl = 'http://localhost:3000/api';
   // static const String _prodBaseUrl = 'https://your-production-domain.com/api';
   // static const String _stagingBaseUrl = 'https://your-staging-domain.com/api';
