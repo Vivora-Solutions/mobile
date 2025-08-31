@@ -111,6 +111,7 @@ class _HomeScreenState extends State<HomeScreen>
             SnackBar(
               content: Text(
                 'Error loading salons: ${fallbackError.toString().replaceAll('Exception: ', '')}',
+                style: GoogleFonts.roboto(fontSize: 16),
               ),
               backgroundColor: Colors.red,
             ),
@@ -121,6 +122,7 @@ class _HomeScreenState extends State<HomeScreen>
           SnackBar(
             content: Text(
               'Error loading salons: ${e.toString().replaceAll('Exception: ', '')}',
+              style: GoogleFonts.roboto(fontSize: 16),
             ),
             backgroundColor: Colors.red,
           ),
@@ -340,6 +342,7 @@ class _HomeScreenState extends State<HomeScreen>
         SnackBar(
           content: Text(
             'Error checking login status: ${e.toString().replaceAll('Exception: ', '')}',
+            style: GoogleFonts.roboto(fontSize: 16),
           ),
           backgroundColor: Colors.red,
         ),
@@ -359,6 +362,7 @@ class _HomeScreenState extends State<HomeScreen>
         SnackBar(
           content: Text(
             'Logout error: ${e.toString().replaceAll('Exception: ', '')}',
+            style: GoogleFonts.roboto(fontSize: 16),
           ),
           backgroundColor: Colors.red,
         ),
@@ -391,20 +395,19 @@ class _HomeScreenState extends State<HomeScreen>
               height: 40,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
-                // Fallback to text if image doesn't load
                 return ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
+                  shaderCallback: (bounds) => LinearGradient(
                     colors: [
-                      Color.fromARGB(255, 0, 0, 0),
-                      Color.fromARGB(255, 98, 98, 98),
-                      Color.fromARGB(255, 255, 255, 255),
+                      Colors.black,
+                      Colors.grey[700]!,
+                      Colors.white,
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ).createShader(bounds),
                   child: Text(
                     'SalonDora',
-                    style: GoogleFonts.dancingScript(
+                    style: GoogleFonts.playfairDisplay(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -416,12 +419,9 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ),
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color.fromARGB(255, 255, 255, 255),
-                Color.fromARGB(255, 255, 255, 255),
-              ],
+              colors: [Colors.white, Colors.grey[100]!],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -439,30 +439,26 @@ class _HomeScreenState extends State<HomeScreen>
                 : Icon(Icons.login, color: Colors.green),
             onPressed: () async {
               if (!_isLoggedinAlready) {
-                // Navigate to login and refresh when returning
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
                 );
-
-                // Refresh login status when returning from login screen
                 _isLoggedIn();
               } else {
-                // Show confirmation dialog
                 final shouldLogout = await showDialog<bool>(
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      title: Text('Logout'),
-                      content: Text('Are you sure you want to logout?'),
+                      title: Text('Logout', style: GoogleFonts.playfairDisplay(fontSize: 20)),
+                      content: Text('Are you sure you want to logout?', style: GoogleFonts.roboto(fontSize: 16)),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(false),
-                          child: Text('Cancel'),
+                          child: Text('Cancel', style: GoogleFonts.roboto(fontSize: 16, color: Colors.grey[600])),
                         ),
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(true),
-                          child: Text('Logout'),
+                          child: Text('Logout', style: GoogleFonts.roboto(fontSize: 16, color: Colors.red)),
                         ),
                       ],
                     );
@@ -478,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen>
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: Colors.grey[700]))
           : Stack(
               children: [
                 Positioned.fill(
@@ -509,32 +505,30 @@ class _HomeScreenState extends State<HomeScreen>
                           padding: const EdgeInsets.all(16.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withOpacity(0.2),
                                   blurRadius: 10,
-                                  spreadRadius: 5,
+                                  spreadRadius: 2,
+                                  offset: const Offset(0, 3),
                                 ),
                               ],
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
-                              ),
                             ),
                             child: TextField(
                               controller: _searchController,
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.roboto(
                                 color: Colors.black87,
                                 fontSize: 16,
                               ),
                               decoration: InputDecoration(
                                 hintText: 'Search a Salon...',
-                                hintStyle: GoogleFonts.poppins(
+                                hintStyle: GoogleFonts.roboto(
                                   color: Colors.grey[600],
                                 ),
                                 filled: true,
-                                fillColor: Colors.white.withOpacity(0.7),
+                                fillColor: Colors.grey[50],
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
@@ -553,7 +547,7 @@ class _HomeScreenState extends State<HomeScreen>
                                             strokeWidth: 2,
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
-                                                  Colors.purple,
+                                                  Colors.grey,
                                                 ),
                                           ),
                                         ),
@@ -611,6 +605,7 @@ class _HomeScreenState extends State<HomeScreen>
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.2),
                                 blurRadius: 6,
+                                spreadRadius: 2,
                                 offset: const Offset(0, 3),
                               ),
                             ],
@@ -644,10 +639,10 @@ class _HomeScreenState extends State<HomeScreen>
                                         Text(
                                           _searchController.text.isEmpty
                                               ? (_useLocationBasedSearch
-                                                    ? ''
-                                                    : 'All Salons')
+                                                  ? 'Nearby Salons'
+                                                  : 'All Salons')
                                               : 'Search Results (${_displayedSalons.length})',
-                                          style: GoogleFonts.poppins(
+                                          style: GoogleFonts.playfairDisplay(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.black87,
@@ -660,12 +655,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                 ? Icons.keyboard_arrow_down
                                                 : Icons.keyboard_arrow_up,
                                             size: 28,
-                                            color: const Color.fromARGB(
-                                              255,
-                                              131,
-                                              129,
-                                              131,
-                                            ),
+                                            color: Colors.grey[600],
                                           ),
                                           onPressed: () {
                                             setState(() {
@@ -681,7 +671,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         _isSalonSectionExpanded)
                                       Text(
                                         '${_displayedSalons.length} found',
-                                        style: GoogleFonts.poppins(
+                                        style: GoogleFonts.roboto(
                                           fontSize: 14,
                                           color: Colors.grey[600],
                                         ),
@@ -697,24 +687,31 @@ class _HomeScreenState extends State<HomeScreen>
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Colors.green[50],
+                                        color: Colors.grey[50],
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: Colors.green.shade200,
+                                          color: Colors.grey[200]!,
                                         ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            blurRadius: 5,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
                                       ),
                                       child: Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.location_on,
-                                            color: Colors.green,
+                                            color: Colors.grey[700],
                                             size: 16,
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
                                             'Showing salons near your location',
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.green[700],
+                                            style: GoogleFonts.roboto(
+                                              color: Colors.grey[700],
                                               fontSize: 12,
                                               fontWeight: FontWeight.w500,
                                             ),
@@ -741,7 +738,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                     ? 'No salons available nearby'
                                                     : 'No salons found for "${_searchController.text}"',
                                                 textAlign: TextAlign.center,
-                                                style: GoogleFonts.poppins(
+                                                style: GoogleFonts.roboto(
                                                   fontSize: 16,
                                                   color: Colors.grey[600],
                                                 ),
@@ -750,19 +747,15 @@ class _HomeScreenState extends State<HomeScreen>
                                                 const SizedBox(height: 16),
                                                 ElevatedButton(
                                                   style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        const Color.fromARGB(
-                                                          255,
-                                                          0,
-                                                          0,
-                                                          0,
-                                                        ),
+                                                    backgroundColor: Colors.grey[600],
+                                                    foregroundColor: Colors.white,
                                                     shape: RoundedRectangleBorder(
                                                       borderRadius:
-                                                          BorderRadius.circular(
-                                                            8,
-                                                          ),
+                                                          BorderRadius.circular(12),
                                                     ),
+                                                    padding: EdgeInsets.symmetric(
+                                                        vertical: 12, horizontal: 24),
+                                                    elevation: 3,
                                                   ),
                                                   onPressed: () async {
                                                     setState(() {
@@ -773,10 +766,10 @@ class _HomeScreenState extends State<HomeScreen>
                                                   },
                                                   child: Text(
                                                     'Show All Salons',
-                                                    style: GoogleFonts.poppins(
+                                                    style: GoogleFonts.roboto(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.bold,
                                                       color: Colors.white,
-                                                      fontWeight:
-                                                          FontWeight.w600,
                                                     ),
                                                   ),
                                                 ),
@@ -802,8 +795,15 @@ class _HomeScreenState extends State<HomeScreen>
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
                                                       BorderRadius.circular(12),
+                                                  side: BorderSide(
+                                                    color: Colors.grey[300]!,
+                                                    width: 1,
+                                                  ),
                                                 ),
+                                                color: Colors.grey[100],
                                                 elevation: 4,
+                                                shadowColor:
+                                                    Colors.grey.withOpacity(0.3),
                                                 child: ListTile(
                                                   leading: Container(
                                                     width: 50,
@@ -811,63 +811,64 @@ class _HomeScreenState extends State<HomeScreen>
                                                     decoration: BoxDecoration(
                                                       color: Colors.grey[200],
                                                       borderRadius:
-                                                          BorderRadius.circular(
-                                                            8,
-                                                          ),
+                                                          BorderRadius.circular(8),
+                                                      border: Border.all(
+                                                        color: Colors.grey[300]!,
+                                                        width: 1,
+                                                      ),
                                                     ),
                                                     child:
                                                         salon['salon_logo_link'] !=
-                                                            null
-                                                        ? ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  8,
-                                                                ),
-                                                            child: Image.network(
-                                                              salon['salon_logo_link'],
-                                                              fit: BoxFit.cover,
-                                                              errorBuilder:
-                                                                  (
+                                                                null
+                                                            ? ClipRRect(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                          8,
+                                                                        ),
+                                                                child: Image.network(
+                                                                  salon['salon_logo_link'],
+                                                                  fit: BoxFit.cover,
+                                                                  errorBuilder:
+                                                                      (
                                                                     context,
                                                                     error,
                                                                     stackTrace,
-                                                                  ) => Icon(
+                                                                  ) =>
+                                                                      Icon(
                                                                     Icons.store,
                                                                     color: Colors
                                                                         .grey[600],
                                                                   ),
-                                                            ),
-                                                          )
-                                                        : Icon(
-                                                            Icons.store,
-                                                            color: Colors
-                                                                .grey[600],
-                                                          ),
+                                                                ),
+                                                              )
+                                                            : Icon(
+                                                                Icons.store,
+                                                                color: Colors
+                                                                    .grey[600],
+                                                              ),
                                                   ),
                                                   title: Text(
                                                     salon['salon_name'] ??
                                                         'Unknown Salon',
-                                                    style: GoogleFonts.poppins(
+                                                    style: GoogleFonts.playfairDisplay(
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      fontSize: 16,
+                                                      fontSize: 18,
                                                       color: Colors.black87,
                                                     ),
                                                   ),
                                                   subtitle: Column(
                                                     crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
+                                                        CrossAxisAlignment.start,
                                                     children: [
                                                       Text(
                                                         salon['salon_address'] ??
                                                             'Address not available',
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                              fontSize: 14,
-                                                              color: Colors
-                                                                  .grey[600],
-                                                            ),
+                                                        style: GoogleFonts.roboto(
+                                                          fontSize: 14,
+                                                          color: Colors.grey[600],
+                                                        ),
                                                       ),
                                                       if (distance != null) ...[
                                                         const SizedBox(
@@ -875,21 +876,22 @@ class _HomeScreenState extends State<HomeScreen>
                                                         ),
                                                         Row(
                                                           children: [
-                                                            const Icon(
+                                                            Icon(
                                                               Icons.location_on,
                                                               size: 14,
                                                               color:
-                                                                  Colors.blue,
+                                                                  Colors.grey[700],
                                                             ),
                                                             const SizedBox(
                                                               width: 4,
                                                             ),
                                                             Text(
                                                               '${(distance / 1000).toStringAsFixed(1)} km away',
-                                                              style: GoogleFonts.poppins(
+                                                              style: GoogleFonts
+                                                                  .roboto(
                                                                 fontSize: 12,
-                                                                color:
-                                                                    Colors.blue,
+                                                                color: Colors
+                                                                    .grey[700],
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w500,
@@ -916,7 +918,8 @@ class _HomeScreenState extends State<HomeScreen>
                                                             ),
                                                             Text(
                                                               '${salon['average_rating'].toStringAsFixed(1)}',
-                                                              style: GoogleFonts.poppins(
+                                                              style: GoogleFonts
+                                                                  .roboto(
                                                                 fontSize: 12,
                                                                 fontWeight:
                                                                     FontWeight
@@ -930,15 +933,10 @@ class _HomeScreenState extends State<HomeScreen>
                                                       ],
                                                     ],
                                                   ),
-                                                  trailing: const Icon(
+                                                  trailing: Icon(
                                                     Icons.arrow_forward_ios,
                                                     size: 16,
-                                                    color: Color.fromARGB(
-                                                      255,
-                                                      0,
-                                                      0,
-                                                      0,
-                                                    ),
+                                                    color: Colors.grey[700],
                                                   ),
                                                   onTap: () =>
                                                       _onSalonMarkerTapped(
@@ -982,12 +980,12 @@ class _HomeScreenState extends State<HomeScreen>
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
           currentIndex: 0,
-          selectedItemColor: const Color.fromARGB(255, 96, 94, 94),
+          selectedItemColor: Colors.grey[800],
           unselectedItemColor: Colors.grey[500],
           backgroundColor: Colors.transparent,
           elevation: 0,
-          selectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-          unselectedLabelStyle: GoogleFonts.poppins(),
+          selectedLabelStyle: GoogleFonts.roboto(fontWeight: FontWeight.w600),
+          unselectedLabelStyle: GoogleFonts.roboto(),
           onTap: (index) {
             switch (index) {
               case 0:
