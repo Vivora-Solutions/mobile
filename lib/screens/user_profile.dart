@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/screens/home_screen.dart';
-import 'package:book_my_salon/screens/current_booking.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart';
-import 'package:book_my_salon/services/profile_service.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:shared_preferences/shared_preferences.dart'; 
+import 'package:salonDora/screens/home_screen.dart';
+import 'package:salonDora/screens/current_booking.dart';
+import 'package:salonDora/screens/auth/login_screen.dart';
+import 'package:salonDora/services/profile_service.dart';
+import 'package:salonDora/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 class UserProfile extends StatefulWidget {
@@ -44,7 +44,7 @@ class _UserProfileState extends State<UserProfile> {
 
       // Check if user is logged in
       final authStatus = await AuthService().isLoggedIn();
-      
+
       if (!authStatus) {
         setState(() {
           isLoggedIn = false;
@@ -75,7 +75,7 @@ class _UserProfileState extends State<UserProfile> {
       });
 
       final profileData = await ProfileService().getUserProfile();
-      
+
       // Extract data from response
       final email = profileData['email'] ?? '';
       final customer = profileData['customer'] as Map<String, dynamic>?;
@@ -86,12 +86,14 @@ class _UserProfileState extends State<UserProfile> {
         _lastNameController.text = customer?['last_name'] ?? '';
         _phoneController.text = customer?['contact_number'] ?? '';
         _locationController.text = customer?['location'] ?? '';
-        
+
         // Handle date of birth
         if (customer?['date_of_birth'] != null) {
           try {
             selectedDate = DateTime.parse(customer!['date_of_birth']);
-            _dateOfBirthController.text = DateFormat('dd/MM/yyyy').format(selectedDate!);
+            _dateOfBirthController.text = DateFormat(
+              'dd/MM/yyyy',
+            ).format(selectedDate!);
           } catch (e) {
             selectedDate = null;
             _dateOfBirthController.text = '';
@@ -102,7 +104,7 @@ class _UserProfileState extends State<UserProfile> {
       });
     } catch (e) {
       // Check if it's an authentication error
-      if (e.toString().contains('Authentication failed') || 
+      if (e.toString().contains('Authentication failed') ||
           e.toString().contains('Please login again')) {
         setState(() {
           isLoggedIn = false;
@@ -120,7 +122,8 @@ class _UserProfileState extends State<UserProfile> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate ?? DateTime.now().subtract(Duration(days: 365 * 25)),
+      initialDate:
+          selectedDate ?? DateTime.now().subtract(Duration(days: 365 * 25)),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
@@ -181,7 +184,9 @@ class _UserProfileState extends State<UserProfile> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to update profile: ${e.toString().replaceAll('Exception: ', '')}'),
+          content: Text(
+            'Failed to update profile: ${e.toString().replaceAll('Exception: ', '')}',
+          ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 4),
         ),
@@ -234,13 +239,10 @@ class _UserProfileState extends State<UserProfile> {
     );
   }
 
-
   void _navigateToLogin() {
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (context) => LoginScreen(fromBooking: false),
-      ),
+      MaterialPageRoute(builder: (context) => LoginScreen(fromBooking: false)),
       (route) => false,
     );
   }
@@ -272,10 +274,10 @@ class _UserProfileState extends State<UserProfile> {
         child: isLoading
             ? Center(child: CircularProgressIndicator())
             : !isLoggedIn
-                ? _buildLoginRequiredWidget()
-                : errorMessage != null
-                    ? _buildErrorWidget()
-                    : _buildProfileForm(),
+            ? _buildLoginRequiredWidget()
+            : errorMessage != null
+            ? _buildErrorWidget()
+            : _buildProfileForm(),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
@@ -367,10 +369,7 @@ class _UserProfileState extends State<UserProfile> {
             style: TextStyle(color: Colors.grey[600]),
           ),
           SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadProfile,
-            child: Text('Retry'),
-          ),
+          ElevatedButton(onPressed: _loadProfile, child: Text('Retry')),
         ],
       ),
     );
@@ -389,11 +388,7 @@ class _UserProfileState extends State<UserProfile> {
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.grey[300],
-                  child: Icon(
-                    Icons.person,
-                    size: 50,
-                    color: Colors.grey[600],
-                  ),
+                  child: Icon(Icons.person, size: 50, color: Colors.grey[600]),
                 ),
                 SizedBox(height: 8),
                 // Text(
@@ -466,7 +461,9 @@ class _UserProfileState extends State<UserProfile> {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value)) {
                         return 'Please enter a valid email';
                       }
                       return null;
@@ -551,7 +548,9 @@ class _UserProfileState extends State<UserProfile> {
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             ),
                             SizedBox(width: 8),
@@ -584,10 +583,7 @@ class _UserProfileState extends State<UserProfile> {
                   onPressed: _logout,
                   child: Text(
                     'Logout',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

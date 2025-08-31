@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:book_my_salon/services/auth_service.dart';
+import 'package:salonDora/services/auth_service.dart';
 import 'dart:typed_data';
-import 'package:book_my_salon/config/api_constants.dart';
+import 'package:salonDora/config/api_constants.dart';
 
 class SalonService {
   static SalonService? _instance;
@@ -26,9 +26,7 @@ class SalonService {
       final response = await _dio.get(
         '${ApiConstants.baseUrl}/salons',
         options: Options(
-          headers: {
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
+          headers: {if (token != null) 'Authorization': 'Bearer $token'},
         ),
       );
 
@@ -56,9 +54,7 @@ class SalonService {
       final response = await _dio.get(
         '${ApiConstants.baseUrl}/salons/name/${Uri.encodeComponent(name)}',
         options: Options(
-          headers: {
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
+          headers: {if (token != null) 'Authorization': 'Bearer $token'},
         ),
       );
 
@@ -86,9 +82,7 @@ class SalonService {
       final response = await _dio.get(
         '${ApiConstants.baseUrl}/salons/by-id/$salonId',
         options: Options(
-          headers: {
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
+          headers: {if (token != null) 'Authorization': 'Bearer $token'},
         ),
       );
 
@@ -118,9 +112,7 @@ class SalonService {
       final response = await _dio.get(
         '${ApiConstants.baseUrl}/salons/$salonId/services',
         options: Options(
-          headers: {
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
+          headers: {if (token != null) 'Authorization': 'Bearer $token'},
         ),
       );
 
@@ -159,10 +151,7 @@ class SalonService {
       final response = await _dio.post(
         '${ApiConstants.baseUrl}/salons/location',
         data: {
-          'location': {
-            'latitude': latitude,
-            'longitude': longitude,
-          },
+          'location': {'latitude': latitude, 'longitude': longitude},
           'radius': radiusMeters,
         },
         options: Options(
@@ -190,7 +179,9 @@ class SalonService {
         }
       }
       if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('Invalid location data: ${e.response?.data['error'] ?? 'Bad request'}');
+        throw Exception(
+          'Invalid location data: ${e.response?.data['error'] ?? 'Bad request'}',
+        );
       }
       throw Exception('Error fetching salons by location: $e');
     }
@@ -203,8 +194,10 @@ class SalonService {
     try {
       // Convert hex string to bytes
       final bytes = Uint8List.fromList(
-        List.generate(locationString.length ~/ 2,
-          (i) => int.parse(locationString.substring(i * 2, i * 2 + 2), radix: 16),
+        List.generate(
+          locationString.length ~/ 2,
+          (i) =>
+              int.parse(locationString.substring(i * 2, i * 2 + 2), radix: 16),
         ),
       );
 
@@ -214,10 +207,7 @@ class SalonService {
       final lng = byteData.getFloat64(9, Endian.little);
       final lat = byteData.getFloat64(17, Endian.little);
 
-      return {
-        'lat': lat,
-        'lng': lng,
-      };
+      return {'lat': lat, 'lng': lng};
     } catch (e) {
       print('Error parsing location: $e');
       return null;

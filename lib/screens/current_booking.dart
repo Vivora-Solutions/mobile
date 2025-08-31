@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/screens/booking_history.dart';
-import 'package:book_my_salon/screens/home_screen.dart';
-import 'package:book_my_salon/screens/user_profile.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart'; // Add this import
-import 'package:book_my_salon/services/auth_service.dart'; // Add this import
+import 'package:salonDora/screens/booking_history.dart';
+import 'package:salonDora/screens/home_screen.dart';
+import 'package:salonDora/screens/user_profile.dart';
+import 'package:salonDora/screens/auth/login_screen.dart'; // Add this import
+import 'package:salonDora/services/auth_service.dart'; // Add this import
 import 'package:intl/intl.dart';
-import 'package:book_my_salon/services/booking_service.dart';
+import 'package:salonDora/services/booking_service.dart';
 
 class CurrentBooking extends StatefulWidget {
   const CurrentBooking({Key? key}) : super(key: key);
@@ -532,65 +532,59 @@ class _CurrentBookingState extends State<CurrentBooking> {
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: ['All', 'Pending', 'Confirmed']
-                            .map((filter) {
-                              final isSelected = selectedFilter == filter;
+                        children: ['All', 'Pending', 'Confirmed'].map((filter) {
+                          final isSelected = selectedFilter == filter;
 
-                              // Count bookings for each filter
-                              int count = 0;
-                              switch (filter) {
-                                case 'Pending':
-                                  count = bookings
-                                      .where(
-                                        (b) =>
-                                            b['status']
-                                                ?.toString()
-                                                .toLowerCase() ==
-                                            'pending',
-                                      )
-                                      .length;
-                                  break;
-                                case 'Confirmed':
-                                  count = bookings
-                                      .where(
-                                        (b) =>
-                                            b['status']
-                                                ?.toString()
-                                                .toLowerCase() ==
-                                            'confirmed',
-                                      )
-                                      .length;
-                                  break;
-                                default:
-                                  count = bookings.length;
-                                  break;
-                              }
+                          // Count bookings for each filter
+                          int count = 0;
+                          switch (filter) {
+                            case 'Pending':
+                              count = bookings
+                                  .where(
+                                    (b) =>
+                                        b['status']?.toString().toLowerCase() ==
+                                        'pending',
+                                  )
+                                  .length;
+                              break;
+                            case 'Confirmed':
+                              count = bookings
+                                  .where(
+                                    (b) =>
+                                        b['status']?.toString().toLowerCase() ==
+                                        'confirmed',
+                                  )
+                                  .length;
+                              break;
+                            default:
+                              count = bookings.length;
+                              break;
+                          }
 
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: FilterChip(
-                                  label: Text(
-                                    '$filter ($count)',
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.black,
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                    ),
-                                  ),
-                                  selected: isSelected,
-                                  onSelected: (selected) {
-                                    _applyFilter(filter);
-                                  },
-                                  backgroundColor: Colors.grey[200],
-                                  selectedColor: Colors.black,
-                                  checkmarkColor: Colors.white,
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: FilterChip(
+                              label: Text(
+                                '$filter ($count)',
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                 ),
-                              );
-                            })
-                            .toList(),
+                              ),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                _applyFilter(filter);
+                              },
+                              backgroundColor: Colors.grey[200],
+                              selectedColor: Colors.black,
+                              checkmarkColor: Colors.white,
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
                   ],
@@ -1069,6 +1063,4 @@ class _CurrentBookingState extends State<CurrentBooking> {
       },
     );
   }
-
-
 }

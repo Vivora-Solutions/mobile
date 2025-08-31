@@ -2,13 +2,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latLng;
-import 'package:book_my_salon/screens/salon_profile.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/services/salon_service.dart';
+import 'package:salonDora/screens/salon_profile.dart';
+import 'package:salonDora/screens/auth/login_screen.dart';
+import 'package:salonDora/services/auth_service.dart';
+import 'package:salonDora/services/salon_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:book_my_salon/screens/user_profile.dart';
-import 'package:book_my_salon/screens/current_booking.dart';
+import 'package:salonDora/screens/user_profile.dart';
+import 'package:salonDora/screens/current_booking.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -338,22 +338,37 @@ class _HomeScreenState extends State<HomeScreen>
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [
-              Color.fromARGB(255, 0, 0, 0),
-              Color.fromARGB(255, 98, 98, 98),
-              Color.fromARGB(255, 255, 255, 255),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ).createShader(bounds),
-          child: Text(
-            'SalonDora',
-            style: GoogleFonts.dancingScript(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+        toolbarHeight: 60.0,
+        title: Container(
+          height: 60,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 17.0),
+            child: Image.asset(
+              'images/header.jpg',
+              height: 40,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback to text if image doesn't load
+                return ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [
+                      Color.fromARGB(255, 0, 0, 0),
+                      Color.fromARGB(255, 98, 98, 98),
+                      Color.fromARGB(255, 255, 255, 255),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+                  child: Text(
+                    'SalonDora',
+                    style: GoogleFonts.dancingScript(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -435,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen>
                         urlTemplate:
                             'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                         subdomains: ['a', 'b', 'c'],
-                        userAgentPackageName: 'com.example.book_my_salon',
+                        userAgentPackageName: 'com.example.salonDora',
                       ),
                       MarkerLayer(
                         markers: [

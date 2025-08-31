@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/config/api_constants.dart';
+import 'package:salonDora/services/auth_service.dart';
+import 'package:salonDora/config/api_constants.dart';
 
 class ProfileService {
   static ProfileService? _instance;
@@ -15,7 +15,6 @@ class ProfileService {
   ProfileService._internal() {
     _dio = Dio();
   }
-
 
   // Get user profile
   Future<Map<String, dynamic>> getUserProfile() async {
@@ -43,10 +42,14 @@ class ProfileService {
         }
       }
       if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('Bad request: ${e.response?.data['error'] ?? 'Invalid request'}');
+        throw Exception(
+          'Bad request: ${e.response?.data['error'] ?? 'Invalid request'}',
+        );
       }
       if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+        throw Exception(
+          'Server error: ${e.response?.data['error'] ?? 'Internal server error'}',
+        );
       }
       throw Exception('Error fetching profile: $e');
     }
@@ -131,10 +134,14 @@ class ProfileService {
         }
       }
       if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('${e.response?.data['error'] ?? 'Invalid profile data'}');
+        throw Exception(
+          '${e.response?.data['error'] ?? 'Invalid profile data'}',
+        );
       }
       if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+        throw Exception(
+          'Server error: ${e.response?.data['error'] ?? 'Internal server error'}',
+        );
       }
       throw Exception('Error updating profile: $e');
     }

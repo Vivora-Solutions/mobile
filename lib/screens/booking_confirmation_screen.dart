@@ -1,10 +1,10 @@
-import 'package:book_my_salon/screens/home_screen.dart';
+import 'package:salonDora/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:book_my_salon/services/booking_service.dart';
-// import 'package:book_my_salon/screens/payment_screen.dart';
-import 'package:book_my_salon/services/profile_service.dart';
-import 'package:book_my_salon/screens/current_booking.dart';
+import 'package:salonDora/services/booking_service.dart';
+// import 'package:salonDora/screens/payment_screen.dart';
+import 'package:salonDora/services/profile_service.dart';
+import 'package:salonDora/screens/current_booking.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final String salonId;
@@ -235,14 +235,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             children: [
               // Header
               Center(
-                child: Text(
-                  'VIVORA',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
+                // child: Text(
+                //   'VIVORA',
+                //   style: TextStyle(
+                //     fontSize: 32,
+                //     fontWeight: FontWeight.bold,
+                //     color: Colors.black,
+                //   ),
+                // ),
               ),
               SizedBox(height: 20),
 

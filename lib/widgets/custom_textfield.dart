@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/utils/colors.dart';
-import 'package:book_my_salon/utils/styles.dart';
+import 'package:salonDora/utils/colors.dart';
+import 'package:salonDora/utils/styles.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;

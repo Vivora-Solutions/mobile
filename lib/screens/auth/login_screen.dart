@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/services/booking_storage_service.dart';
-import 'package:book_my_salon/screens/home_screen.dart';
-import 'package:book_my_salon/screens/auth/signup_screen.dart';
-import 'package:book_my_salon/screens/booking_confirmation_screen.dart';
-import 'package:book_my_salon/widgets/custom_button.dart';
-import 'package:book_my_salon/widgets/custom_textfield.dart';
-import 'package:book_my_salon/utils/colors.dart';
-import 'package:book_my_salon/utils/styles.dart';
+import 'package:salonDora/services/auth_service.dart';
+import 'package:salonDora/services/booking_storage_service.dart';
+import 'package:salonDora/screens/home_screen.dart';
+import 'package:salonDora/screens/auth/signup_screen.dart';
+import 'package:salonDora/screens/booking_confirmation_screen.dart';
+import 'package:salonDora/widgets/custom_button.dart';
+import 'package:salonDora/widgets/custom_textfield.dart';
+import 'package:salonDora/utils/colors.dart';
+import 'package:salonDora/utils/styles.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool fromBooking; // Flag to indicate if coming from booking flow
@@ -190,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // App Logo/Title
                   Text(
-                    'Book My Salon',
+                    'SalonDora',
                     style: AppStyles.headingStyle,
                     textAlign: TextAlign.center,
                   ),
@@ -204,57 +204,57 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 50),
 
-                  // Social Login Button (Optional)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Google login not implemented yet'),
-                          ),
-                        );
-                      },
-                      icon: Image.network(
-                        'https://www.google.com/favicon.ico',
-                        width: 24,
-                        height: 24,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.login, size: 24);
-                        },
-                      ),
-                      label: const Text('Continue with Google'),
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        backgroundColor: const Color.fromARGB(
-                          255,
-                          183,
-                          183,
-                          183,
-                        ),
-                        side: const BorderSide(color: Colors.grey),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
+                  // // Social Login Button (Optional)
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   child: ElevatedButton.icon(
+                  //     onPressed: () {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         const SnackBar(
+                  //           content: Text('Google login not implemented yet'),
+                  //         ),
+                  //       );
+                  //     },
+                  //     icon: Image.network(
+                  //       'https://www.google.com/favicon.ico',
+                  //       width: 24,
+                  //       height: 24,
+                  //       fit: BoxFit.cover,
+                  //       errorBuilder: (context, error, stackTrace) {
+                  //         return const Icon(Icons.login, size: 24);
+                  //       },
+                  //     ),
+                  //     label: const Text('Continue with Google'),
+                  //     style: ElevatedButton.styleFrom(
+                  //       foregroundColor: Colors.black,
+                  //       backgroundColor: const Color.fromARGB(
+                  //         255,
+                  //         183,
+                  //         183,
+                  //         183,
+                  //       ),
+                  //       side: const BorderSide(color: Colors.grey),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(8),
+                  //       ),
+                  //       padding: const EdgeInsets.symmetric(vertical: 12),
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 30),
 
-                  // OR Divider
-                  Row(
-                    children: [
-                      const Expanded(child: Divider(color: Colors.white)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('OR', style: AppStyles.subHeadingStyle),
-                      ),
-                      const Expanded(child: Divider(color: Colors.white)),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
+                  // // OR Divider
+                  // Row(
+                  //   children: [
+                  //     const Expanded(child: Divider(color: Colors.white)),
+                  //     Padding(
+                  //       padding: const EdgeInsets.symmetric(horizontal: 16),
+                  //       child: Text('OR', style: AppStyles.subHeadingStyle),
+                  //     ),
+                  //     const Expanded(child: Divider(color: Colors.white)),
+                  //   ],
+                  // ),
+                  // const SizedBox(height: 30),
 
                   // Email Field
                   CustomTextField(

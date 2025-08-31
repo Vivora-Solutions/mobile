@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/services/review_service.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart';
+import 'package:salonDora/services/auth_service.dart';
+import 'package:salonDora/services/review_service.dart';
+import 'package:salonDora/screens/auth/login_screen.dart';
 import 'package:intl/intl.dart';
-import 'package:book_my_salon/services/booking_service.dart';
+import 'package:salonDora/services/booking_service.dart';
 
 class BookingHistory extends StatefulWidget {
   const BookingHistory({Key? key}) : super(key: key);

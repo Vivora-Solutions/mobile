@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/config/api_constants.dart';
+import 'package:salonDora/services/auth_service.dart';
+import 'package:salonDora/config/api_constants.dart';
 
 class ReviewService {
   static ReviewService? _instance;
@@ -15,7 +15,6 @@ class ReviewService {
   ReviewService._internal() {
     _dio = Dio();
   }
-
 
   // Create a review
   Future<Map<String, dynamic>> createReview({
@@ -33,7 +32,8 @@ class ReviewService {
           'booking_id': bookingId,
           'salon_id': salonId,
           'star_rating': starRating,
-          if (reviewText != null && reviewText.isNotEmpty) 'review_text': reviewText,
+          if (reviewText != null && reviewText.isNotEmpty)
+            'review_text': reviewText,
         },
         options: Options(
           headers: {
@@ -60,10 +60,14 @@ class ReviewService {
         }
       }
       if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('${e.response?.data['error'] ?? 'Invalid review data'}');
+        throw Exception(
+          '${e.response?.data['error'] ?? 'Invalid review data'}',
+        );
       }
       if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+        throw Exception(
+          'Server error: ${e.response?.data['error'] ?? 'Internal server error'}',
+        );
       }
       throw Exception('Error creating review: $e');
     }
@@ -113,13 +117,17 @@ class ReviewService {
         }
       }
       if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('${e.response?.data['error'] ?? 'Invalid review data'}');
+        throw Exception(
+          '${e.response?.data['error'] ?? 'Invalid review data'}',
+        );
       }
       if (e is DioException && e.response?.statusCode == 404) {
         throw Exception('Review not found or cannot be updated');
       }
       if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+        throw Exception(
+          'Server error: ${e.response?.data['error'] ?? 'Internal server error'}',
+        );
       }
       throw Exception('Error updating review: $e');
     }
