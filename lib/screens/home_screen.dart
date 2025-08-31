@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart' as latLng;
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salonDora/screens/salon_profile.dart';
 import 'package:salonDora/screens/auth/login_screen.dart';
 import 'package:salonDora/services/auth_service.dart';
@@ -20,7 +19,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with WidgetsBindingObserver, TickerProviderStateMixin {
-  latLng.LatLng? _currentLocation;
+  LatLng? _currentLocation;
   bool _isLoading = true;
   bool _isSearching = false;
   bool _isSalonSectionExpanded = false;
@@ -28,7 +27,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   List<Map<String, dynamic>> _allSalons = [];
   List<Map<String, dynamic>> _displayedSalons = [];
-  List<Map<String, dynamic>> _nearbySalons = [];
+  Set<Marker> _markers = {};
+  GoogleMapController? _mapController;
 
   final TextEditingController _searchController = TextEditingController();
   final SalonService _salonService = SalonService();
@@ -69,9 +69,7 @@ class _HomeScreenState extends State<HomeScreen>
           radiusMeters: 10000,
         );
 
-        setState(() {
-          _nearbySalons = salons;
-        });
+        setState(() {});
       } else {
         salons = await _salonService.getAllSalons();
       }
@@ -89,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen>
         _allSalons = transformedSalons;
         _displayedSalons = transformedSalons;
       });
+      _updateMarkers();
     } catch (e) {
       if (_useLocationBasedSearch) {
         try {
@@ -106,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen>
             _displayedSalons = transformedSalons;
             _useLocationBasedSearch = false;
           });
+          _updateMarkers();
         } catch (fallbackError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -129,13 +129,54 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  latLng.LatLng? _getSalonLocation(Map<String, dynamic> salon) {
+  void _updateMarkers() {
+    Set<Marker> markers = {};
+
+    // Add current location marker
+    if (_currentLocation != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('current_location'),
+          position: _currentLocation!,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+          infoWindow: const InfoWindow(title: 'Your Location'),
+        ),
+      );
+    }
+
+    // Add salon markers
+    for (int i = 0; i < _displayedSalons.length; i++) {
+      final salon = _displayedSalons[i];
+      if (salon['latitude'] != null && salon['longitude'] != null) {
+        markers.add(
+          Marker(
+            markerId: MarkerId('salon_$i'),
+            position: LatLng(salon['latitude'], salon['longitude']),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueRed,
+            ),
+            infoWindow: InfoWindow(
+              title: salon['salon_name'] ?? 'Unknown Salon',
+              snippet: salon['salon_address'] ?? '',
+            ),
+            onTap: () => _onSalonMarkerTapped(salon),
+          ),
+        );
+      }
+    }
+
+    setState(() {
+      _markers = markers;
+    });
+  }
+
+  LatLng? _getSalonLocation(Map<String, dynamic> salon) {
     try {
       if (salon['latitude'] != null && salon['longitude'] != null) {
         final lat = double.tryParse(salon['latitude'].toString());
         final lng = double.tryParse(salon['longitude'].toString());
         if (lat != null && lng != null) {
-          return latLng.LatLng(lat, lng);
+          return LatLng(lat, lng);
         }
       }
 
@@ -143,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen>
         final lat = double.tryParse(salon['lat']?.toString() ?? '');
         final lng = double.tryParse(salon['lng']?.toString() ?? '');
         if (lat != null && lng != null) {
-          return latLng.LatLng(lat, lng);
+          return LatLng(lat, lng);
         }
       }
 
@@ -161,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen>
           }
           final lon = byteData.getFloat64(coordOffset, endian);
           final lat = byteData.getFloat64(coordOffset + 8, endian);
-          return latLng.LatLng(lat, lon);
+          return LatLng(lat, lon);
         }
 
         final pointRegex = RegExp(r'POINT\(([^\s]+)\s([^\)]+)\)');
@@ -170,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen>
           final lng = double.tryParse(pointMatch.group(1) ?? '');
           final lat = double.tryParse(pointMatch.group(2) ?? '');
           if (lng != null && lat != null) {
-            return latLng.LatLng(lat, lng);
+            return LatLng(lat, lng);
           }
         }
       }
@@ -222,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen>
         desiredAccuracy: LocationAccuracy.high,
       );
       setState(() {
-        _currentLocation = latLng.LatLng(position.latitude, position.longitude);
+        _currentLocation = LatLng(position.latitude, position.longitude);
         _isLoading = false;
       });
 
@@ -239,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _handleLocationError() {
     setState(() {
-      _currentLocation = latLng.LatLng(6.9271, 79.8612);
+      _currentLocation = LatLng(6.9271, 79.8612);
       _useLocationBasedSearch = false;
       _isLoading = false;
     });
@@ -265,6 +306,7 @@ class _HomeScreenState extends State<HomeScreen>
         _displayedSalons = _allSalons;
         _isSearching = false;
       });
+      _updateMarkers();
       return;
     }
 
@@ -281,6 +323,7 @@ class _HomeScreenState extends State<HomeScreen>
       _displayedSalons = filteredResults;
       _isSearching = false;
     });
+    _updateMarkers();
   }
 
   Future<void> _isLoggedIn() async {
@@ -439,92 +482,20 @@ class _HomeScreenState extends State<HomeScreen>
           : Stack(
               children: [
                 Positioned.fill(
-                  child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter:
-                          _currentLocation ?? latLng.LatLng(6.9271, 79.8612),
-                      initialZoom: _useLocationBasedSearch ? 14.0 : 13.0,
+                  child: GoogleMap(
+                    onMapCreated: (GoogleMapController controller) {
+                      _mapController = controller;
+                    },
+                    initialCameraPosition: CameraPosition(
+                      target: _currentLocation ?? LatLng(6.9271, 79.8612),
+                      zoom: _useLocationBasedSearch ? 14.0 : 13.0,
                     ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        subdomains: ['a', 'b', 'c'],
-                        userAgentPackageName: 'com.example.salonDora',
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          if (_currentLocation != null)
-                            Marker(
-                              point: _currentLocation!,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.blue,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.3),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.my_location,
-                                  color: Colors.white,
-                                  size: 20.0,
-                                ),
-                              ),
-                            ),
-                          ..._displayedSalons
-                              .map((salon) {
-                                if (salon['latitude'] != null &&
-                                    salon['longitude'] != null) {
-                                  return Marker(
-                                    point: latLng.LatLng(
-                                      salon['latitude'],
-                                      salon['longitude'],
-                                    ),
-                                    child: GestureDetector(
-                                      onTap: () => _onSalonMarkerTapped(salon),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.redAccent,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 2,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(
-                                                0.3,
-                                              ),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ],
-                                        ),
-                                        child: const Icon(
-                                          Icons.store,
-                                          color: Colors.white,
-                                          size: 20.0,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return null;
-                              })
-                              .where((marker) => marker != null)
-                              .cast<Marker>(),
-                        ],
-                      ),
-                    ],
+                    markers: _markers,
+                    myLocationEnabled: true,
+                    myLocationButtonEnabled: false,
+                    zoomControlsEnabled: false,
+                    mapToolbarEnabled: false,
+                    compassEnabled: true,
                   ),
                 ),
                 SafeArea(
@@ -1046,6 +1017,7 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _searchController.dispose();
     _animationController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 }
