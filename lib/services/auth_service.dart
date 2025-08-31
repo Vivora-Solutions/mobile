@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:book_my_salon/config/api_constants.dart';
+import 'package:salonDora/config/api_constants.dart';
 
 class AuthService {
   static AuthService? _instance;
@@ -211,7 +211,7 @@ class AuthService {
           return false;
         }
       }
-      
+
       // Network error or other issues - assume not logged in for safety
       // but don't clear tokens in case it's just a temporary network issue
       return false;

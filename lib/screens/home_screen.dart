@@ -2,13 +2,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latLng;
-import 'package:book_my_salon/screens/salon_profile.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/services/salon_service.dart';
+import 'package:salonDora/screens/salon_profile.dart';
+import 'package:salonDora/screens/auth/login_screen.dart';
+import 'package:salonDora/services/auth_service.dart';
+import 'package:salonDora/services/salon_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:book_my_salon/screens/user_profile.dart';
-import 'package:book_my_salon/screens/current_booking.dart';
+import 'package:salonDora/screens/user_profile.dart';
+import 'package:salonDora/screens/current_booking.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -450,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen>
                         urlTemplate:
                             'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                         subdomains: ['a', 'b', 'c'],
-                        userAgentPackageName: 'com.example.book_my_salon',
+                        userAgentPackageName: 'com.example.salonDora',
                       ),
                       MarkerLayer(
                         markers: [

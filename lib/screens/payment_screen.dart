@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/screens/booking_confirmation_screen.dart';
+import 'package:salonDora/screens/booking_confirmation_screen.dart';
 
 class PaymentScreen extends StatelessWidget {
   const PaymentScreen({super.key});
@@ -40,7 +40,9 @@ class PaymentScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color.fromARGB(255, 52, 52, 52),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color.fromARGB(255, 66, 66, 66)),
+                  border: Border.all(
+                    color: const Color.fromARGB(255, 66, 66, 66),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,7 +53,9 @@ class PaymentScreen extends StatelessWidget {
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Payhere payment not implemented yet'),
+                            content: Text(
+                              'Payhere payment not implemented yet',
+                            ),
                             backgroundColor: Color.fromARGB(255, 255, 255, 255),
                           ),
                         );
@@ -64,7 +68,9 @@ class PaymentScreen extends StatelessWidget {
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Direct Banking Transaction not implemented yet'),
+                            content: Text(
+                              'Direct Banking Transaction not implemented yet',
+                            ),
                             backgroundColor: Color.fromARGB(255, 255, 255, 255),
                           ),
                         );
@@ -77,7 +83,9 @@ class PaymentScreen extends StatelessWidget {
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Credit Card Payment not implemented yet'),
+                            content: Text(
+                              'Credit Card Payment not implemented yet',
+                            ),
                             backgroundColor: Color.fromARGB(255, 255, 255, 255),
                           ),
                         );
@@ -112,17 +120,17 @@ class PaymentScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 52, 52, 52),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
                 child: const Text(
                   'Back',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ),
             ],
@@ -132,7 +140,11 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentOption(BuildContext context, {required String title, required VoidCallback onTap}) {
+  Widget _buildPaymentOption(
+    BuildContext context, {
+    required String title,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -148,11 +160,7 @@ class PaymentScreen extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.grey,
-              size: 16,
-            ),
+            const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
           ],
         ),
       ),

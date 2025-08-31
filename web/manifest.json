@@ -1,6 +1,6 @@
 {
-    "name": "book_my_salon",
-    "short_name": "book_my_salon",
+    "name": "salonDora",
+    "short_name": "salonDora",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/config/api_constants.dart';
+import 'package:salonDora/services/auth_service.dart';
+import 'package:salonDora/config/api_constants.dart';
 
 class BookingService {
   static BookingService? _instance;

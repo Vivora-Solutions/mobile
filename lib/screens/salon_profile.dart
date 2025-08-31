@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/services/salon_service.dart';
+import 'package:salonDora/services/salon_service.dart';
 import 'booking_screen.dart';
 
 class SalonProfile extends StatefulWidget {
@@ -244,7 +244,7 @@ class _SalonProfileState extends State<SalonProfile> {
                 ],
               ),
               const SizedBox(height: 16),
-              if (selectedServices.isEmpty)...[
+              if (selectedServices.isEmpty) ...[
                 SizedBox(
                   height: 200,
                   child: PageView.builder(
@@ -328,7 +328,9 @@ class _SalonProfileState extends State<SalonProfile> {
               const SizedBox(height: 16),
               // Scrollable services section
               SizedBox(
-                height: selectedServices.isEmpty ? null : 300, // Constrain the height of the services section
+                height: selectedServices.isEmpty
+                    ? null
+                    : 300, // Constrain the height of the services section
                 child: SingleChildScrollView(
                   child: Column(
                     children: [

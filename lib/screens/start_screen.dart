@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/screens/home_screen.dart';
+import 'package:salonDora/screens/home_screen.dart';
 import 'dart:async';
 
 class StartScreen extends StatefulWidget {
@@ -24,12 +24,10 @@ class _StartScreenState extends State<StartScreen>
     );
 
     // Fade animation: fade in first half, fade out second half
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.addListener(() {
       setState(() {});
@@ -47,12 +45,15 @@ class _StartScreenState extends State<StartScreen>
 
     // Fade in for 1 second
     await _controller.animateTo(1.0, duration: const Duration(seconds: 1));
-    
+
     // Hold for a brief moment
     await Future.delayed(const Duration(milliseconds: 200));
-    
+
     // Fade out for 0.8 seconds
-    await _controller.animateBack(0.0, duration: const Duration(milliseconds: 800));
+    await _controller.animateBack(
+      0.0,
+      duration: const Duration(milliseconds: 800),
+    );
 
     // Navigate to home screen
     if (mounted) {

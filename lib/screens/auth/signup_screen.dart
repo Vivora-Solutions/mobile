@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/services/auth_service.dart';
-import 'package:book_my_salon/services/booking_storage_service.dart';
-import 'package:book_my_salon/screens/home_screen.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart';
-import 'package:book_my_salon/screens/booking_confirmation_screen.dart';
-import 'package:book_my_salon/widgets/custom_button.dart';
-import 'package:book_my_salon/widgets/custom_textfield.dart';
-import 'package:book_my_salon/utils/colors.dart';
-import 'package:book_my_salon/utils/styles.dart';
+import 'package:salonDora/services/auth_service.dart';
+import 'package:salonDora/services/booking_storage_service.dart';
+import 'package:salonDora/screens/home_screen.dart';
+import 'package:salonDora/screens/auth/login_screen.dart';
+import 'package:salonDora/screens/booking_confirmation_screen.dart';
+import 'package:salonDora/widgets/custom_button.dart';
+import 'package:salonDora/widgets/custom_textfield.dart';
+import 'package:salonDora/utils/colors.dart';
+import 'package:salonDora/utils/styles.dart';
 
 class SignupScreen extends StatefulWidget {
   final bool fromBooking; // Flag to indicate if coming from booking flow
-  
+
   const SignupScreen({super.key, this.fromBooking = false});
 
   @override
@@ -57,7 +57,9 @@ class _SignupScreenState extends State<SignupScreen> {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Account created successfully! Please login to continue.'),
+            content: Text(
+              'Account created successfully! Please login to continue.',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -115,7 +117,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 40),
-                  
+
                   // Show booking context message if coming from booking
                   if (widget.fromBooking)
                     Container(
@@ -139,7 +141,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ],
                       ),
                     ),
-                  
+
                   // App Logo/Title
                   Text(
                     'Book My Salon',
@@ -148,7 +150,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    widget.fromBooking ? 'Create account to continue' : 'Create a new account',
+                    widget.fromBooking
+                        ? 'Create account to continue'
+                        : 'Create a new account',
                     style: AppStyles.subHeadingStyle,
                     textAlign: TextAlign.center,
                   ),
@@ -263,7 +267,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       style: AppStyles.linkStyle,
                     ),
                   ),
-                  
+
                   // Back to booking button (optional)
                   if (widget.fromBooking)
                     TextButton(
