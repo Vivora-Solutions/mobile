@@ -397,11 +397,7 @@ class _HomeScreenState extends State<HomeScreen>
               errorBuilder: (context, error, stackTrace) {
                 return ShaderMask(
                   shaderCallback: (bounds) => LinearGradient(
-                    colors: [
-                      Colors.black,
-                      Colors.grey[700]!,
-                      Colors.white,
-                    ],
+                    colors: [Colors.black, Colors.grey[700]!, Colors.white],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ).createShader(bounds),
@@ -449,16 +445,34 @@ class _HomeScreenState extends State<HomeScreen>
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      title: Text('Logout', style: GoogleFonts.playfairDisplay(fontSize: 20)),
-                      content: Text('Are you sure you want to logout?', style: GoogleFonts.roboto(fontSize: 16)),
+                      title: Text(
+                        'Logout',
+                        style: GoogleFonts.playfairDisplay(fontSize: 20),
+                      ),
+                      content: Text(
+                        'Are you sure you want to logout?',
+                        style: GoogleFonts.roboto(fontSize: 16),
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(false),
-                          child: Text('Cancel', style: GoogleFonts.roboto(fontSize: 16, color: Colors.grey[600])),
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.roboto(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
                         ),
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(true),
-                          child: Text('Logout', style: GoogleFonts.roboto(fontSize: 16, color: Colors.red)),
+                          child: Text(
+                            'Logout',
+                            style: GoogleFonts.roboto(
+                              fontSize: 16,
+                              color: Colors.red,
+                            ),
+                          ),
                         ),
                       ],
                     );
@@ -522,6 +536,14 @@ class _HomeScreenState extends State<HomeScreen>
                                 color: Colors.black87,
                                 fontSize: 16,
                               ),
+                              onTap: () {
+                                // Add this onTap callback to expand salon section when search bar is tapped
+                                if (!_isSalonSectionExpanded) {
+                                  setState(() {
+                                    _isSalonSectionExpanded = true;
+                                  });
+                                }
+                              },
                               decoration: InputDecoration(
                                 hintText: 'Search a Salon...',
                                 hintStyle: GoogleFonts.roboto(
@@ -639,8 +661,8 @@ class _HomeScreenState extends State<HomeScreen>
                                         Text(
                                           _searchController.text.isEmpty
                                               ? (_useLocationBasedSearch
-                                                  ? 'Nearby Salons'
-                                                  : 'All Salons')
+                                                    ? ''
+                                                    : 'All Salons')
                                               : 'Search Results (${_displayedSalons.length})',
                                           style: GoogleFonts.playfairDisplay(
                                             fontSize: 20,
@@ -733,28 +755,35 @@ class _HomeScreenState extends State<HomeScreen>
                                                 color: Colors.grey[400],
                                               ),
                                               const SizedBox(height: 16),
-                                              Text(
-                                                _searchController.text.isEmpty
-                                                    ? 'No salons available nearby'
-                                                    : 'No salons found for "${_searchController.text}"',
-                                                textAlign: TextAlign.center,
-                                                style: GoogleFonts.roboto(
-                                                  fontSize: 16,
-                                                  color: Colors.grey[600],
-                                                ),
-                                              ),
+                                              // Text(
+                                              //   _searchController.text.isEmpty
+                                              //       ? 'No salons available nearby'
+                                              //       : 'No salons found for "${_searchController.text}"',
+                                              //   textAlign: TextAlign.center,
+                                              //   style: GoogleFonts.roboto(
+                                              //     fontSize: 16,
+                                              //     color: Colors.grey[600],
+                                              //   ),
+                                              // ),
                                               if (_useLocationBasedSearch) ...[
                                                 const SizedBox(height: 16),
                                                 ElevatedButton(
                                                   style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.grey[600],
-                                                    foregroundColor: Colors.white,
+                                                    backgroundColor:
+                                                        Colors.grey[600],
+                                                    foregroundColor:
+                                                        Colors.white,
                                                     shape: RoundedRectangleBorder(
                                                       borderRadius:
-                                                          BorderRadius.circular(12),
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
                                                     ),
-                                                    padding: EdgeInsets.symmetric(
-                                                        vertical: 12, horizontal: 24),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          vertical: 12,
+                                                          horizontal: 24,
+                                                        ),
                                                     elevation: 3,
                                                   ),
                                                   onPressed: () async {
@@ -768,7 +797,8 @@ class _HomeScreenState extends State<HomeScreen>
                                                     'Show All Salons',
                                                     style: GoogleFonts.roboto(
                                                       fontSize: 16,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                       color: Colors.white,
                                                     ),
                                                   ),
@@ -802,8 +832,8 @@ class _HomeScreenState extends State<HomeScreen>
                                                 ),
                                                 color: Colors.grey[100],
                                                 elevation: 4,
-                                                shadowColor:
-                                                    Colors.grey.withOpacity(0.3),
+                                                shadowColor: Colors.grey
+                                                    .withOpacity(0.3),
                                                 child: ListTile(
                                                   leading: Container(
                                                     width: 50,
@@ -811,64 +841,69 @@ class _HomeScreenState extends State<HomeScreen>
                                                     decoration: BoxDecoration(
                                                       color: Colors.grey[200],
                                                       borderRadius:
-                                                          BorderRadius.circular(8),
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
                                                       border: Border.all(
-                                                        color: Colors.grey[300]!,
+                                                        color:
+                                                            Colors.grey[300]!,
                                                         width: 1,
                                                       ),
                                                     ),
                                                     child:
                                                         salon['salon_logo_link'] !=
-                                                                null
-                                                            ? ClipRRect(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                          8,
-                                                                        ),
-                                                                child: Image.network(
-                                                                  salon['salon_logo_link'],
-                                                                  fit: BoxFit.cover,
-                                                                  errorBuilder:
-                                                                      (
+                                                            null
+                                                        ? ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  8,
+                                                                ),
+                                                            child: Image.network(
+                                                              salon['salon_logo_link'],
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder:
+                                                                  (
                                                                     context,
                                                                     error,
                                                                     stackTrace,
-                                                                  ) =>
-                                                                      Icon(
+                                                                  ) => Icon(
                                                                     Icons.store,
                                                                     color: Colors
                                                                         .grey[600],
                                                                   ),
-                                                                ),
-                                                              )
-                                                            : Icon(
-                                                                Icons.store,
-                                                                color: Colors
-                                                                    .grey[600],
-                                                              ),
+                                                            ),
+                                                          )
+                                                        : Icon(
+                                                            Icons.store,
+                                                            color: Colors
+                                                                .grey[600],
+                                                          ),
                                                   ),
                                                   title: Text(
                                                     salon['salon_name'] ??
                                                         'Unknown Salon',
-                                                    style: GoogleFonts.playfairDisplay(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 18,
-                                                      color: Colors.black87,
-                                                    ),
+                                                    style:
+                                                        GoogleFonts.playfairDisplay(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 18,
+                                                          color: Colors.black87,
+                                                        ),
                                                   ),
                                                   subtitle: Column(
                                                     crossAxisAlignment:
-                                                        CrossAxisAlignment.start,
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
                                                       Text(
                                                         salon['salon_address'] ??
                                                             'Address not available',
-                                                        style: GoogleFonts.roboto(
-                                                          fontSize: 14,
-                                                          color: Colors.grey[600],
-                                                        ),
+                                                        style:
+                                                            GoogleFonts.roboto(
+                                                              fontSize: 14,
+                                                              color: Colors
+                                                                  .grey[600],
+                                                            ),
                                                       ),
                                                       if (distance != null) ...[
                                                         const SizedBox(
@@ -879,16 +914,15 @@ class _HomeScreenState extends State<HomeScreen>
                                                             Icon(
                                                               Icons.location_on,
                                                               size: 14,
-                                                              color:
-                                                                  Colors.grey[700],
+                                                              color: Colors
+                                                                  .grey[700],
                                                             ),
                                                             const SizedBox(
                                                               width: 4,
                                                             ),
                                                             Text(
                                                               '${(distance / 1000).toStringAsFixed(1)} km away',
-                                                              style: GoogleFonts
-                                                                  .roboto(
+                                                              style: GoogleFonts.roboto(
                                                                 fontSize: 12,
                                                                 color: Colors
                                                                     .grey[700],
@@ -918,8 +952,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                             ),
                                                             Text(
                                                               '${salon['average_rating'].toStringAsFixed(1)}',
-                                                              style: GoogleFonts
-                                                                  .roboto(
+                                                              style: GoogleFonts.roboto(
                                                                 fontSize: 12,
                                                                 fontWeight:
                                                                     FontWeight
