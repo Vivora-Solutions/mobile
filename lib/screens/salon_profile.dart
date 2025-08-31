@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:salonDora/services/salon_service.dart';
 import 'booking_screen.dart';
 
@@ -21,11 +22,11 @@ class _SalonProfileState extends State<SalonProfile> {
   Map<String, dynamic>? salonData;
   List<Map<String, dynamic>> allServices = [];
   List<Map<String, dynamic>> filteredServices = [];
-  // Change to store service objects instead of just names
   Map<String, Map<String, dynamic>> selectedServices = {};
   bool isLoading = true;
   String? error;
   String selectedCategory = 'All';
+  final TextEditingController _searchController = TextEditingController();
 
   int get totalCost => selectedServices.values
       .map((service) => service['price'] as int)
@@ -43,6 +44,7 @@ class _SalonProfileState extends State<SalonProfile> {
       viewportFraction: 0.7,
       keepPage: true,
     );
+    _searchController.addListener(_filterServicesBySearch);
     _loadSalonData();
   }
 
@@ -106,26 +108,67 @@ class _SalonProfileState extends State<SalonProfile> {
             )
             .toList();
       }
-      // No need to reinitialize selectedServices - they persist across filter changes
+      _filterServicesBySearch();
     });
   }
 
-  // Helper method to check if a service is selected
+  void _filterServicesBySearch() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        filteredServices = selectedCategory == 'All'
+            ? List.from(allServices)
+            : allServices.where((service) {
+                final categoryFilters = selectedCategory == 'Male'
+                    ? ['men', 'unisex']
+                    : selectedCategory == 'Female'
+                        ? ['women', 'unisex']
+                        : selectedCategory == 'Children'
+                            ? ['children']
+                            : selectedCategory == 'Unisex'
+                                ? ['unisex']
+                                : [selectedCategory.toLowerCase()];
+                return categoryFilters.contains(
+                    service['service_category']?.toString().toLowerCase());
+              }).toList();
+      } else {
+        filteredServices = allServices
+            .where(
+              (service) =>
+                  (service['service_name'] as String)
+                      .toLowerCase()
+                      .contains(query) &&
+                  (selectedCategory == 'All' ||
+                      (selectedCategory == 'Male' &&
+                          ['men', 'unisex']
+                              .contains(service['service_category']?.toString().toLowerCase())) ||
+                      (selectedCategory == 'Female' &&
+                          ['women', 'unisex']
+                              .contains(service['service_category']?.toString().toLowerCase())) ||
+                      (selectedCategory == 'Children' &&
+                          ['children'].contains(
+                              service['service_category']?.toString().toLowerCase())) ||
+                      (selectedCategory == 'Unisex' &&
+                          ['unisex'].contains(
+                              service['service_category']?.toString().toLowerCase()))),
+            )
+            .toList();
+      }
+    });
+  }
+
   bool _isServiceSelected(Map<String, dynamic> service) {
     final serviceName = service['service_name'] as String;
     return selectedServices.containsKey(serviceName);
   }
 
-  // Helper method to toggle service selection
   void _toggleServiceSelection(Map<String, dynamic> service) {
     final serviceName = service['service_name'] as String;
 
     setState(() {
       if (selectedServices.containsKey(serviceName)) {
-        // Service is selected, remove it
         selectedServices.remove(serviceName);
       } else {
-        // Service is not selected, add it
         selectedServices[serviceName] = service;
       }
     });
@@ -134,13 +177,18 @@ class _SalonProfileState extends State<SalonProfile> {
   @override
   void dispose() {
     _pageController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.black),
+        ),
+      );
     }
 
     if (error != null) {
@@ -149,8 +197,31 @@ class _SalonProfileState extends State<SalonProfile> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Error: $error'),
-              ElevatedButton(onPressed: _loadSalonData, child: Text('Retry')),
+              Text(
+                'Error: $error',
+                style: GoogleFonts.roboto(
+                  color: Colors.red,
+                  fontSize: 16,
+                ),
+              ),
+              ElevatedButton(
+                onPressed: _loadSalonData,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 5,
+                ),
+                child: Text(
+                  'Retry',
+                  style: GoogleFonts.roboto(
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -163,7 +234,7 @@ class _SalonProfileState extends State<SalonProfile> {
               .where((link) => link != null && link.isNotEmpty)
               .cast<String>()
               .toList()
-        : ['https://placehold.co/300x200'];
+        : ['https://placehold.co/400x300'];
 
     return Scaffold(
       body: SafeArea(
@@ -171,17 +242,6 @@ class _SalonProfileState extends State<SalonProfile> {
           padding: const EdgeInsets.all(16.0),
           child: ListView(
             children: [
-              Center(
-                // child: Text(
-                //   "VIVORA",
-                //   style: TextStyle(
-                //     fontFamily: 'VivoraFont',
-                //     fontSize: 28,
-                //     color: Colors.black,
-                //   ),
-                // ),
-              ),
-              const SizedBox(height: 10),
               Row(
                 children: [
                   ClipRRect(
@@ -189,18 +249,18 @@ class _SalonProfileState extends State<SalonProfile> {
                     child: salonData?['salon_logo_link'] != null
                         ? Image.network(
                             salonData!['salon_logo_link'],
-                            height: 50,
-                            width: 50,
+                            height: 70,
+                            width: 70,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Icon(
                                 Icons.store,
-                                size: 50,
-                                color: Colors.grey,
+                                size: 70,
+                                color: Colors.grey[600],
                               );
                             },
                           )
-                        : Icon(Icons.store, size: 50, color: Colors.grey),
+                        : Icon(Icons.store, size: 70, color: Colors.grey[600]),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -209,19 +269,23 @@ class _SalonProfileState extends State<SalonProfile> {
                       children: [
                         Text(
                           salonData?['salon_name'] ?? widget.salonName,
-                          style: const TextStyle(
+                          style: GoogleFonts.playfairDisplay(
                             fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                            fontSize: 22,
+                            color: Colors.black87,
                           ),
                         ),
                         Row(
                           children: [
-                            Icon(Icons.location_on, size: 16),
+                            Icon(Icons.location_on, size: 18, color: Colors.grey[600]),
                             SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 salonData?['salon_address'] ?? "Colombo",
-                                style: TextStyle(fontSize: 14),
+                                style: GoogleFonts.roboto(
+                                  fontSize: 16,
+                                  color: Colors.black54,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -230,11 +294,14 @@ class _SalonProfileState extends State<SalonProfile> {
                         if (salonData?['average_rating'] != null)
                           Row(
                             children: [
-                              Icon(Icons.star, size: 16, color: Colors.amber),
+                              Icon(Icons.star, size: 18, color: Colors.amber),
                               SizedBox(width: 4),
                               Text(
                                 salonData!['average_rating'].toString(),
-                                style: TextStyle(fontSize: 14),
+                                style: GoogleFonts.roboto(
+                                  fontSize: 16,
+                                  color: Colors.black54,
+                                ),
                               ),
                             ],
                           ),
@@ -246,7 +313,7 @@ class _SalonProfileState extends State<SalonProfile> {
               const SizedBox(height: 16),
               if (selectedServices.isEmpty) ...[
                 SizedBox(
-                  height: 200,
+                  height: 300,
                   child: PageView.builder(
                     itemCount: bannerImages.length,
                     controller: _pageController,
@@ -276,12 +343,20 @@ class _SalonProfileState extends State<SalonProfile> {
                                 child: Image.network(
                                   bannerImages[index],
                                   fit: BoxFit.cover,
-                                  width: 200,
-                                  height: 200,
+                                  width: 300,
+                                  height: 300,
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
-                                      color: Colors.grey,
-                                      child: Center(child: Text('Image Error')),
+                                      color: Colors.grey[300],
+                                      child: Center(
+                                        child: Text(
+                                          'Image Error',
+                                          style: GoogleFonts.roboto(
+                                            color: Colors.black54,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
                                     );
                                   },
                                 ),
@@ -295,42 +370,113 @@ class _SalonProfileState extends State<SalonProfile> {
                 ),
               ],
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 "Services",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: ['All', 'Male', 'Female', 'Children', 'Unisex'].map((
-                  category,
-                ) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                    child: ElevatedButton(
-                      onPressed: () => _updateServices(category),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedCategory == category
-                            ? Colors.black
-                            : Colors.grey,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0,
-                          vertical: 4.0,
+                children: ['All', 'Male', 'Female'].map((category) {
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: ElevatedButton(
+                        onPressed: () => _updateServices(category),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: selectedCategory == category
+                              ? Colors.black
+                              : Colors.grey[400],
+                          foregroundColor: Colors.white,
+                          minimumSize: Size(100, 40),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0,
+                            vertical: 8.0,
+                          ),
+                          textStyle: GoogleFonts.roboto(fontSize: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 3,
                         ),
-                        textStyle: const TextStyle(fontSize: 12),
+                        child: Text(category),
                       ),
-                      child: Text(category),
                     ),
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: ['Children', 'Unisex'].map((category) {
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: ElevatedButton(
+                        onPressed: () => _updateServices(category),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: selectedCategory == category
+                              ? Colors.black
+                              : Colors.grey[400],
+                          foregroundColor: Colors.white,
+                          minimumSize: Size(80, 40),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0,
+                            vertical: 8.0,
+                          ),
+                          textStyle: GoogleFonts.roboto(fontSize: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 3,
+                        ),
+                        child: Text(category),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search services...',
+                    prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[200]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                    contentPadding: EdgeInsets.symmetric(vertical: 8),
+                    hintStyle: GoogleFonts.roboto(color: Colors.grey[600]),
+                  ),
+                  style: GoogleFonts.roboto(fontSize: 16),
+                ),
+              ),
               const SizedBox(height: 16),
-              // Scrollable services section
               SizedBox(
-                height: selectedServices.isEmpty
-                    ? null
-                    : 300, // Constrain the height of the services section
+                height: selectedServices.isEmpty ? null : 300,
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
@@ -339,6 +485,10 @@ class _SalonProfileState extends State<SalonProfile> {
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                           child: Text(
                             'No services available for ${selectedCategory.toLowerCase()} category',
+                            style: GoogleFonts.roboto(
+                              color: Colors.black54,
+                              fontSize: 16,
+                            ),
                           ),
                         )
                       else
@@ -349,42 +499,58 @@ class _SalonProfileState extends State<SalonProfile> {
                           final category =
                               service['service_category'] as String?;
                           return CheckboxListTile(
-                            title: Text(serviceName),
+                            title: Text(
+                              serviceName,
+                              style: GoogleFonts.roboto(
+                                color: Colors.black87,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                             subtitle: Text(
                               'Rs $price • ${duration} min${category != null ? ' • ${category.toUpperCase()}' : ''}',
+                              style: GoogleFonts.roboto(
+                                color: Colors.black54,
+                                fontSize: 14,
+                              ),
                             ),
                             value: _isServiceSelected(service),
                             onChanged: (bool? value) {
                               _toggleServiceSelection(service);
                             },
+                            activeColor: Colors.black,
                           );
                         }),
                     ],
                   ),
                 ),
               ),
-              // const SizedBox(height: 8),
-
-              // Show selected services summary if any are selected
               if (selectedServices.isNotEmpty) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Selected Services (${selectedServices.length})',
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey[700],
+                          color: Colors.black,
                         ),
                       ),
-                      // const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 4,
@@ -392,13 +558,20 @@ class _SalonProfileState extends State<SalonProfile> {
                           return Chip(
                             label: Text(
                               service['service_name'],
-                              style: TextStyle(fontSize: 12),
+                              style: GoogleFonts.roboto(
+                                fontSize: 12,
+                                color: Colors.white,
+                              ),
                             ),
-                            deleteIcon: Icon(Icons.close, size: 16),
+                            deleteIcon: Icon(Icons.close, size: 16, color: Colors.white),
                             onDeleted: () => _toggleServiceSelection(service),
                             backgroundColor: Colors.black,
-                            labelStyle: TextStyle(color: Colors.white),
+                            labelStyle: GoogleFonts.roboto(color: Colors.white),
                             deleteIconColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 2,
                           );
                         }).toList(),
                       ),
@@ -406,24 +579,25 @@ class _SalonProfileState extends State<SalonProfile> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       "Duration",
-                      style: TextStyle(
+                      style: GoogleFonts.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
+                        color: Colors.black87,
                       ),
                     ),
                     Text(
                       totalDuration >= 60
                           ? "${totalDuration ~/ 60} ${totalDuration ~/ 60 == 1 ? 'hour' : 'hours'}${totalDuration % 60 > 0 ? ' ${totalDuration % 60} min' : ''}"
                           : "${totalDuration} min",
-                      style: const TextStyle(
+                      style: GoogleFonts.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
+                        color: Colors.black87,
                       ),
                     ),
                   ],
@@ -432,49 +606,67 @@ class _SalonProfileState extends State<SalonProfile> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       "Total",
-                      style: TextStyle(
+                      style: GoogleFonts.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
+                        color: Colors.black87,
                       ),
                     ),
                     Text(
                       "Rs $totalCost",
-                      style: const TextStyle(
+                      style: GoogleFonts.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
+                        color: Colors.black87,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  onPressed: () {
-                    final selectedServicesList = selectedServices.values
-                        .toList();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BookingScreen(
-                          salonId: widget.salonId,
-                          salonName:
-                              salonData?['salon_name'] ?? widget.salonName,
-                          selectedServices: selectedServicesList,
-                          totalCost: totalCost,
-                          totalDuration: totalDuration,
-                          salonData: salonData,
-                        ),
+                Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        spreadRadius: 3,
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
                       ),
-                    );
-                  },
-                  child: const Text(
-                    "Proceed",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      textStyle: GoogleFonts.roboto(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0, // Elevation handled by Container's shadow
+                    ),
+                    onPressed: () {
+                      final selectedServicesList = selectedServices.values.toList();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookingScreen(
+                            salonId: widget.salonId,
+                            salonName: salonData?['salon_name'] ?? widget.salonName,
+                            selectedServices: selectedServicesList,
+                            totalCost: totalCost,
+                            totalDuration: totalDuration,
+                            salonData: salonData,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("Proceed"),
                   ),
                 ),
               ],
