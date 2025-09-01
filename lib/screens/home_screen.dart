@@ -774,7 +774,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                 const SizedBox(height: 16),
                                                 ElevatedButton(
                                                   style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.grey[600],
+                                                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                                                     foregroundColor: Colors.white,
                                                     shape: RoundedRectangleBorder(
                                                       borderRadius:
