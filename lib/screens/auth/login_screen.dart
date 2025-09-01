@@ -6,7 +6,6 @@ import 'package:salonDora/screens/auth/signup_screen.dart';
 import 'package:salonDora/screens/booking_confirmation_screen.dart';
 import 'package:salonDora/widgets/custom_button.dart';
 import 'package:salonDora/widgets/custom_textfield.dart';
-import 'package:salonDora/utils/colors.dart';
 import 'package:salonDora/utils/styles.dart';
 
 class LoginScreen extends StatefulWidget {
