@@ -58,37 +58,31 @@ class AuthService {
   Future<Map<String, dynamic>> registerUser({
     required String email,
     required String password,
-    required String role,
     String? firstName,
     String? lastName,
-    String? salonName,
-    String? salonAddress,
     String? dateOfBirth,
     Map<String, double>? location,
     String? contactNumber,
-    String? salonDescription,
-    String? salonLogoLink,
   }) async {
     try {
       final body = {
         'email': email,
         'password': password,
-        'role': role,
         if (firstName != null) 'first_name': firstName,
         if (lastName != null) 'last_name': lastName,
-        if (salonName != null) 'salon_name': salonName,
-        if (salonAddress != null) 'salon_address': salonAddress,
         if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
-        if (location != null) 'location': location,
+        if (location != null) 'location': {
+          'latitude': location['latitude'],
+          'longitude': location['longitude'],
+        },
         if (contactNumber != null) 'contact_number': contactNumber,
-        if (salonDescription != null) 'salon_description': salonDescription,
-        if (salonLogoLink != null) 'salon_logo_link': salonLogoLink,
       };
 
       final response = await _dio.post(
         '${ApiConstants.baseUrl}/auth/register-customer',
         data: body,
       );
+      
       print("Response code = ${response.statusCode}");
       if (response.statusCode == 200) {
         return response.data;
