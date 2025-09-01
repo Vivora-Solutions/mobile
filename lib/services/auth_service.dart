@@ -3,6 +3,7 @@ import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:salonDora/config/api_constants.dart';
+import 'package:salonDora/services/google_auth_service.dart'; // Add this import
 
 class AuthService {
   static AuthService? _instance;
@@ -71,10 +72,11 @@ class AuthService {
         if (firstName != null) 'first_name': firstName,
         if (lastName != null) 'last_name': lastName,
         if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
-        if (location != null) 'location': {
-          'latitude': location['latitude'],
-          'longitude': location['longitude'],
-        },
+        if (location != null)
+          'location': {
+            'latitude': location['latitude'],
+            'longitude': location['longitude'],
+          },
         if (contactNumber != null) 'contact_number': contactNumber,
       };
 
@@ -82,7 +84,7 @@ class AuthService {
         '${ApiConstants.baseUrl}/auth/register-customer',
         data: body,
       );
-      
+
       print("Response code = ${response.statusCode}");
       if (response.statusCode == 200) {
         return response.data;
@@ -116,6 +118,13 @@ class AuthService {
         _cookieJar.deleteAll();
       } catch (e) {
         print('Failed to clear cookies: $e');
+      }
+
+      // Sign out from Google
+      try {
+        await GoogleAuthService().signOut();
+      } catch (e) {
+        print('Google sign out failed (ignored): $e');
       }
 
       // Optional: Call backend logout (don't wait for it if it fails)

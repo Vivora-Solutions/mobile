@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:salonDora/services/auth_service.dart';
+import 'package:salonDora/services/google_auth_service.dart'; // Add this import
 import 'package:salonDora/services/booking_storage_service.dart';
 import 'package:salonDora/screens/home_screen.dart';
 import 'package:salonDora/screens/auth/signup_screen.dart';
@@ -24,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isGoogleLoading = false; // Add this
 
   @override
   void initState() {
@@ -76,6 +78,53 @@ class _LoginScreenState extends State<LoginScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isGoogleLoading = true;
+    });
+
+    try {
+      final result = await GoogleAuthService().signInWithGoogle(
+        fromBooking: widget.fromBooking,
+      );
+
+      if (result['success']) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result['isNewUser']
+                  ? 'Account created and logged in successfully!'
+                  : 'Login successful!',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Handle navigation based on booking context
+        if (widget.fromBooking) {
+          await _handleBookingRedirect();
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isGoogleLoading = false;
+      });
     }
   }
 
@@ -204,57 +253,65 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 50),
 
-                  // // Social Login Button (Optional)
-                  // SizedBox(
-                  //   width: double.infinity,
-                  //   child: ElevatedButton.icon(
-                  //     onPressed: () {
-                  //       ScaffoldMessenger.of(context).showSnackBar(
-                  //         const SnackBar(
-                  //           content: Text('Google login not implemented yet'),
-                  //         ),
-                  //       );
-                  //     },
-                  //     icon: Image.network(
-                  //       'https://www.google.com/favicon.ico',
-                  //       width: 24,
-                  //       height: 24,
-                  //       fit: BoxFit.cover,
-                  //       errorBuilder: (context, error, stackTrace) {
-                  //         return const Icon(Icons.login, size: 24);
-                  //       },
-                  //     ),
-                  //     label: const Text('Continue with Google'),
-                  //     style: ElevatedButton.styleFrom(
-                  //       foregroundColor: Colors.black,
-                  //       backgroundColor: const Color.fromARGB(
-                  //         255,
-                  //         183,
-                  //         183,
-                  //         183,
-                  //       ),
-                  //       side: const BorderSide(color: Colors.grey),
-                  //       shape: RoundedRectangleBorder(
-                  //         borderRadius: BorderRadius.circular(8),
-                  //       ),
-                  //       padding: const EdgeInsets.symmetric(vertical: 12),
-                  //     ),
-                  //   ),
-                  // ),
-                  // const SizedBox(height: 30),
+                  // Google Sign-In Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isGoogleLoading ? null : _signInWithGoogle,
+                      icon: _isGoogleLoading
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : Image.asset(
+                              'images/google_logo.png', 
+                              width: 24,
+                              height: 24,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.login,
+                                  size: 24,
+                                  color: Colors.white,
+                                );
+                              },
+                            ),
+                      label: Text(
+                        _isGoogleLoading
+                            ? 'Signing in...'
+                            : widget.fromBooking
+                            ? 'Continue with Google'
+                            : 'Sign in with Google',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.red[600],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
 
-                  // // OR Divider
-                  // Row(
-                  //   children: [
-                  //     const Expanded(child: Divider(color: Colors.white)),
-                  //     Padding(
-                  //       padding: const EdgeInsets.symmetric(horizontal: 16),
-                  //       child: Text('OR', style: AppStyles.subHeadingStyle),
-                  //     ),
-                  //     const Expanded(child: Divider(color: Colors.white)),
-                  //   ],
-                  // ),
-                  // const SizedBox(height: 30),
+                  // OR Divider
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: Colors.grey)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text('OR', style: AppStyles.subHeadingStyle),
+                      ),
+                      const Expanded(child: Divider(color: Colors.grey)),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
 
                   // Email Field
                   CustomTextField(
