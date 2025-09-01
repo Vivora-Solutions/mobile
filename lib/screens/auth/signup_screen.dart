@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:salonDora/services/auth_service.dart';
-import 'package:salonDora/services/booking_storage_service.dart';
-import 'package:salonDora/screens/home_screen.dart';
 import 'package:salonDora/screens/auth/login_screen.dart';
-import 'package:salonDora/screens/booking_confirmation_screen.dart';
 import 'package:salonDora/widgets/custom_button.dart';
 import 'package:salonDora/widgets/custom_textfield.dart';
 import 'package:salonDora/utils/colors.dart';
@@ -144,7 +141,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                   // App Logo/Title
                   Text(
-                    'Book My Salon',
+                    'SalonDora',
                     style: AppStyles.headingStyle,
                     textAlign: TextAlign.center,
                   ),
