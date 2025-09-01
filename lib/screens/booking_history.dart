@@ -14,21 +14,18 @@ class BookingHistory extends StatefulWidget {
 
 class _BookingHistoryState extends State<BookingHistory> {
   List<Map<String, dynamic>> bookings = [];
-  List<Map<String, dynamic>> filteredBookings =
-      []; // Add filtered bookings list
+  List<Map<String, dynamic>> filteredBookings = [];
   bool isLoading = true;
   bool isLoadingMore = false;
   String? errorMessage;
   bool isLoggedIn = false;
-  String selectedFilter = 'All'; // Add filter state
+  String selectedFilter = 'All';
 
-  // Pagination variables
   int currentPage = 1;
   int totalPages = 1;
   bool hasMorePages = false;
   final int itemsPerPage = 10;
 
-  // Scroll controller for pagination
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -44,7 +41,6 @@ class _BookingHistoryState extends State<BookingHistory> {
     super.dispose();
   }
 
-  // Check authentication first, then load booking history
   Future<void> _checkAuthAndLoadHistory() async {
     try {
       setState(() {
@@ -52,7 +48,6 @@ class _BookingHistoryState extends State<BookingHistory> {
         errorMessage = null;
       });
 
-      // Check if user is logged in
       final authStatus = await AuthService().isLoggedIn();
 
       if (!authStatus) {
@@ -67,7 +62,6 @@ class _BookingHistoryState extends State<BookingHistory> {
         isLoggedIn = true;
       });
 
-      // If logged in, load booking history
       await _loadBookingHistory(reset: true);
     } catch (e) {
       setState(() {
@@ -84,7 +78,7 @@ class _BookingHistoryState extends State<BookingHistory> {
           isLoading = true;
           currentPage = 1;
           bookings.clear();
-          filteredBookings.clear(); // Clear filtered bookings too
+          filteredBookings.clear();
         });
       } else {
         setState(() {
@@ -101,7 +95,6 @@ class _BookingHistoryState extends State<BookingHistory> {
         response['data'] ?? [],
       );
 
-      // Process the bookings to extract review data properly
       final processedBookings = fetchedBookings.map((booking) {
         final reviews = booking['customer_reviews'] as List<dynamic>?;
 
@@ -114,7 +107,6 @@ class _BookingHistoryState extends State<BookingHistory> {
           booking['review_updated_at'] = review['updated_at'];
         }
 
-        // Remove the nested customer_reviews to clean up the data structure
         booking.remove('customer_reviews');
 
         return booking;
@@ -139,17 +131,14 @@ class _BookingHistoryState extends State<BookingHistory> {
         isLoadingMore = false;
       });
 
-      // Apply current filter after loading
       _applyFilter(selectedFilter);
 
-      // Show unrated bookings popup after first load
       if (reset) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _showUnratedBookingsPopup();
         });
       }
     } catch (e) {
-      // Check if it's an authentication error
       if (e.toString().contains('Authentication failed') ||
           e.toString().contains('Please login again')) {
         setState(() {
@@ -167,7 +156,6 @@ class _BookingHistoryState extends State<BookingHistory> {
     }
   }
 
-  // Add filter method
   void _applyFilter(String filter) {
     setState(() {
       selectedFilter = filter;
@@ -185,14 +173,13 @@ class _BookingHistoryState extends State<BookingHistory> {
             return status == 'cancelled' || status == 'no_show';
           }).toList();
           break;
-        default: // 'All'
+        default:
           filteredBookings = List.from(bookings);
           break;
       }
     });
   }
 
-  // Handle scroll for pagination
   void _onScroll() {
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
@@ -203,18 +190,15 @@ class _BookingHistoryState extends State<BookingHistory> {
     }
   }
 
-  // Refresh method
   Future<void> _refreshHistory() async {
     await _checkAuthAndLoadHistory();
   }
 
-  // Navigate to login screen
   void _navigateToLogin() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => LoginScreen(fromBooking: false)),
     ).then((_) {
-      // Refresh when user comes back from login
       _checkAuthAndLoadHistory();
     });
   }
@@ -269,7 +253,6 @@ class _BookingHistoryState extends State<BookingHistory> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  // Switch to completed filter to show unrated bookings
                   _applyFilter('Completed');
                 },
                 style: ElevatedButton.styleFrom(
@@ -285,12 +268,9 @@ class _BookingHistoryState extends State<BookingHistory> {
     }
   }
 
-  // Check if booking can be rated
   bool _canRateBooking(Map<String, dynamic> booking) {
     final status = booking['status']?.toString().toLowerCase();
     final userRating = booking['user_rating'];
-
-    // Can only rate completed bookings that haven't been rated yet
     return status == 'completed' && (userRating == null || userRating == 0);
   }
 
@@ -299,13 +279,10 @@ class _BookingHistoryState extends State<BookingHistory> {
     return userRating != null && userRating > 0;
   }
 
-  // Show rating dialog (updated to handle both create and edit)
   void _showRatingDialog(Map<String, dynamic> booking, {bool isEdit = false}) {
     final salon = booking['salon'] as Map<String, dynamic>?;
     double rating = isEdit ? (booking['user_rating']?.toDouble() ?? 0.0) : 0.0;
-    String reviewText = isEdit
-        ? (booking['user_review']?.toString() ?? '')
-        : '';
+    String reviewText = isEdit ? (booking['user_review']?.toString() ?? '') : '';
     final reviewController = TextEditingController(text: reviewText);
 
     showDialog(
@@ -340,7 +317,6 @@ class _BookingHistoryState extends State<BookingHistory> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Booking details
                     Container(
                       padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -375,8 +351,6 @@ class _BookingHistoryState extends State<BookingHistory> {
                       ),
                     ),
                     SizedBox(height: 16),
-
-                    // Star rating
                     Text(
                       'Rate your experience:',
                       style: TextStyle(
@@ -405,8 +379,6 @@ class _BookingHistoryState extends State<BookingHistory> {
                       }),
                     ),
                     SizedBox(height: 16),
-
-                    // Review text
                     Text(
                       'Write a review (optional):',
                       style: TextStyle(
@@ -462,14 +434,12 @@ class _BookingHistoryState extends State<BookingHistory> {
     );
   }
 
-  // Submit rating
   Future<void> _submitRating(
     Map<String, dynamic> booking,
     double rating,
     String reviewText,
   ) async {
     try {
-      // Show loading dialog
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -477,7 +447,9 @@ class _BookingHistoryState extends State<BookingHistory> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+              ),
               SizedBox(height: 16),
               Text(
                 'Submitting your review...',
@@ -495,10 +467,8 @@ class _BookingHistoryState extends State<BookingHistory> {
         reviewText: reviewText.isNotEmpty ? reviewText : null,
       );
 
-      // Close loading dialog
       Navigator.of(context).pop();
 
-      // Update local booking data
       setState(() {
         final index = bookings.indexWhere(
           (b) => b['booking_id'] == booking['booking_id'],
@@ -506,7 +476,6 @@ class _BookingHistoryState extends State<BookingHistory> {
         if (index != -1) {
           bookings[index]['user_rating'] = rating;
           bookings[index]['user_review'] = reviewText;
-          // Store review_id for future edits if returned from backend
           if (result['data'] != null && result['data']['review_id'] != null) {
             bookings[index]['review_id'] = result['data']['review_id'];
           }
@@ -527,7 +496,6 @@ class _BookingHistoryState extends State<BookingHistory> {
         ),
       );
     } catch (e) {
-      // Close loading dialog
       Navigator.of(context).pop();
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -542,7 +510,6 @@ class _BookingHistoryState extends State<BookingHistory> {
     }
   }
 
-  // Update rating (new method)
   Future<void> _updateRating(
     Map<String, dynamic> booking,
     double rating,
@@ -555,7 +522,6 @@ class _BookingHistoryState extends State<BookingHistory> {
         throw Exception('Review ID not found');
       }
 
-      // Show loading dialog
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -563,7 +529,9 @@ class _BookingHistoryState extends State<BookingHistory> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+              ),
               SizedBox(height: 16),
               Text(
                 'Updating your review...',
@@ -580,10 +548,8 @@ class _BookingHistoryState extends State<BookingHistory> {
         reviewText: reviewText.isNotEmpty ? reviewText : null,
       );
 
-      // Close loading dialog
       Navigator.of(context).pop();
 
-      // Update local booking data
       setState(() {
         final index = bookings.indexWhere(
           (b) => b['booking_id'] == booking['booking_id'],
@@ -608,7 +574,6 @@ class _BookingHistoryState extends State<BookingHistory> {
         ),
       );
     } catch (e) {
-      // Close loading dialog
       Navigator.of(context).pop();
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -706,7 +671,6 @@ class _BookingHistoryState extends State<BookingHistory> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Filter chips - only show if logged in and have bookings
             if (isLoggedIn && bookings.isNotEmpty)
               Container(
                 margin: EdgeInsets.only(bottom: 16),
@@ -742,7 +706,6 @@ class _BookingHistoryState extends State<BookingHistory> {
                         ) {
                           final isSelected = selectedFilter == filter;
 
-                          // Count bookings for each filter
                           int count = 0;
                           switch (filter) {
                             case 'Completed':
@@ -796,21 +759,21 @@ class _BookingHistoryState extends State<BookingHistory> {
                   ],
                 ),
               ),
-
-            // Loading, Error, Login Required, or Content
             Expanded(
               child: isLoading
-                  ? Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                      ),
+                    )
                   : !isLoggedIn
-                  ? _buildLoginRequiredWidget()
-                  : errorMessage != null
-                  ? _buildErrorWidget()
-                  : filteredBookings.isEmpty
-                  ? _buildEmptyWidget()
-                  : _buildHistoryList(),
+                      ? _buildLoginRequiredWidget()
+                      : errorMessage != null
+                          ? _buildErrorWidget()
+                          : filteredBookings.isEmpty
+                              ? _buildEmptyWidget()
+                              : _buildHistoryList(),
             ),
-
-            // Back to Bookings Button - only show if logged in
             if (isLoggedIn)
               Padding(
                 padding: const EdgeInsets.only(top: 6.0),
@@ -839,7 +802,6 @@ class _BookingHistoryState extends State<BookingHistory> {
     );
   }
 
-  // Login required widget
   Widget _buildLoginRequiredWidget() {
     return Center(
       child: Column(
@@ -879,7 +841,6 @@ class _BookingHistoryState extends State<BookingHistory> {
     );
   }
 
-  // Error widget
   Widget _buildErrorWidget() {
     return Center(
       child: Column(
@@ -907,7 +868,6 @@ class _BookingHistoryState extends State<BookingHistory> {
     );
   }
 
-  // Empty widget
   Widget _buildEmptyWidget() {
     String message;
     String description;
@@ -964,23 +924,23 @@ class _BookingHistoryState extends State<BookingHistory> {
     );
   }
 
-  // Updated history list to use filtered bookings
   Widget _buildHistoryList() {
     return ListView.builder(
       controller: _scrollController,
       itemCount: filteredBookings.length + (isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
-        // Show loading indicator at the end if loading more
         if (index == filteredBookings.length) {
           return Center(
             child: Padding(
               padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+              ),
             ),
           );
         }
 
-        final booking = filteredBookings[index]; // Use filtered bookings
+        final booking = filteredBookings[index];
         final salon = booking['salon'] as Map<String, dynamic>?;
         final stylist = booking['stylist'] as Map<String, dynamic>?;
         final canRate = _canRateBooking(booking);
@@ -995,7 +955,6 @@ class _BookingHistoryState extends State<BookingHistory> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Row with Salon Info and Price
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1081,8 +1040,6 @@ class _BookingHistoryState extends State<BookingHistory> {
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // Date and Time
                 Text(
                   _formatDate(booking['booking_start_datetime'] ?? ''),
                   style: const TextStyle(
@@ -1099,8 +1056,6 @@ class _BookingHistoryState extends State<BookingHistory> {
                   ),
                   style: const TextStyle(fontSize: 14, color: Colors.black),
                 ),
-
-                // Duration
                 if (booking['total_duration_minutes'] != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
@@ -1112,8 +1067,6 @@ class _BookingHistoryState extends State<BookingHistory> {
                       ),
                     ),
                   ),
-
-                // Notes if available
                 if (booking['notes'] != null &&
                     booking['notes'].toString().isNotEmpty)
                   Padding(
@@ -1141,15 +1094,11 @@ class _BookingHistoryState extends State<BookingHistory> {
                       ),
                     ),
                   ),
-
                 const SizedBox(height: 16),
-
-                // Rating Section - Fixed logic
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     if (hasReview) ...[
-                      // Show existing rating with edit option
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1204,7 +1153,6 @@ class _BookingHistoryState extends State<BookingHistory> {
                           ],
                         ),
                       ),
-                      // Edit button
                       ElevatedButton.icon(
                         onPressed: () =>
                             _showRatingDialog(booking, isEdit: true),
@@ -1223,7 +1171,6 @@ class _BookingHistoryState extends State<BookingHistory> {
                         label: Text('Edit', style: TextStyle(fontSize: 12)),
                       ),
                     ] else if (canRate) ...[
-                      // Show rate button for completed unrated bookings
                       Expanded(
                         child: Row(
                           children: [
@@ -1261,7 +1208,6 @@ class _BookingHistoryState extends State<BookingHistory> {
                         label: Text('Rate Now', style: TextStyle(fontSize: 12)),
                       ),
                     ] else ...[
-                      // Show status message for non-completed bookings
                       Row(
                         children: [
                           Icon(
@@ -1275,9 +1221,9 @@ class _BookingHistoryState extends State<BookingHistory> {
                                     'cancelled'
                                 ? 'Booking was cancelled'
                                 : booking['status']?.toString().toLowerCase() ==
-                                      'no_show'
-                                ? 'Marked as no-show'
-                                : 'Rating not available',
+                                        'no_show'
+                                    ? 'Marked as no-show'
+                                    : 'Rating not available',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
