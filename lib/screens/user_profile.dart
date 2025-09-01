@@ -42,7 +42,6 @@ class _UserProfileState extends State<UserProfile> {
         errorMessage = null;
       });
 
-      // Check if user is logged in
       final authStatus = await AuthService().isLoggedIn();
 
       if (!authStatus) {
@@ -57,7 +56,6 @@ class _UserProfileState extends State<UserProfile> {
         isLoggedIn = true;
       });
 
-      // If logged in, load profile
       await _loadProfile();
     } catch (e) {
       setState(() {
@@ -76,7 +74,6 @@ class _UserProfileState extends State<UserProfile> {
 
       final profileData = await ProfileService().getUserProfile();
 
-      // Extract data from response
       final email = profileData['email'] ?? '';
       final customer = profileData['customer'] as Map<String, dynamic>?;
 
@@ -87,7 +84,6 @@ class _UserProfileState extends State<UserProfile> {
         _phoneController.text = customer?['contact_number'] ?? '';
         _locationController.text = customer?['location'] ?? '';
 
-        // Handle date of birth
         if (customer?['date_of_birth'] != null) {
           try {
             selectedDate = DateTime.parse(customer!['date_of_birth']);
@@ -103,7 +99,6 @@ class _UserProfileState extends State<UserProfile> {
         isLoading = false;
       });
     } catch (e) {
-      // Check if it's an authentication error
       if (e.toString().contains('Authentication failed') ||
           e.toString().contains('Please login again')) {
         setState(() {
@@ -145,7 +140,6 @@ class _UserProfileState extends State<UserProfile> {
         isSaving = true;
       });
 
-      // Prepare date of birth in proper format for backend
       String? formattedDateOfBirth;
       if (selectedDate != null) {
         formattedDateOfBirth = DateFormat('yyyy-MM-dd').format(selectedDate!);
@@ -195,7 +189,7 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> _logout() async {
-    final parentContext = context; // Capture before dialog
+    final parentContext = context;
 
     showDialog(
       context: parentContext,
@@ -210,7 +204,7 @@ class _UserProfileState extends State<UserProfile> {
             ),
             TextButton(
               onPressed: () async {
-                Navigator.of(dialogContext).pop(); // Close the alert
+                Navigator.of(dialogContext).pop();
 
                 try {
                   await AuthService().signOut().timeout(Duration(seconds: 2));
@@ -225,7 +219,6 @@ class _UserProfileState extends State<UserProfile> {
 
                 Navigator.of(parentContext).pushAndRemoveUntil(
                   MaterialPageRoute(
-                    // builder: (_) => LoginScreen(fromBooking: false),
                     builder: (_) => HomeScreen(),
                   ),
                   (route) => false,
@@ -272,12 +265,16 @@ class _UserProfileState extends State<UserProfile> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                ),
+              )
             : !isLoggedIn
-            ? _buildLoginRequiredWidget()
-            : errorMessage != null
-            ? _buildErrorWidget()
-            : _buildProfileForm(),
+                ? _buildLoginRequiredWidget()
+                : errorMessage != null
+                    ? _buildErrorWidget()
+                    : _buildProfileForm(),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
@@ -304,7 +301,6 @@ class _UserProfileState extends State<UserProfile> {
               );
               break;
             case 2:
-              // Stay on current page
               break;
           }
         },
@@ -381,7 +377,6 @@ class _UserProfileState extends State<UserProfile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Profile Header
           Center(
             child: Column(
               children: [
@@ -391,24 +386,14 @@ class _UserProfileState extends State<UserProfile> {
                   child: Icon(Icons.person, size: 50, color: Colors.grey[600]),
                 ),
                 SizedBox(height: 8),
-                // Text(
-                //   'Profile',
-                //   style: TextStyle(
-                //     fontSize: 20,
-                //     fontWeight: FontWeight.bold,
-                //   ),
-                // ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-
-          // Form fields
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // First Name
                   TextFormField(
                     controller: _firstNameController,
                     decoration: InputDecoration(
@@ -426,8 +411,6 @@ class _UserProfileState extends State<UserProfile> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Last Name
                   TextFormField(
                     controller: _lastNameController,
                     decoration: InputDecoration(
@@ -445,8 +428,6 @@ class _UserProfileState extends State<UserProfile> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Email
                   TextFormField(
                     controller: _emailController,
                     decoration: InputDecoration(
@@ -470,8 +451,6 @@ class _UserProfileState extends State<UserProfile> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Phone Number
                   TextFormField(
                     controller: _phoneController,
                     decoration: InputDecoration(
@@ -490,8 +469,6 @@ class _UserProfileState extends State<UserProfile> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Date of Birth
                   TextFormField(
                     controller: _dateOfBirthController,
                     decoration: InputDecoration(
@@ -506,27 +483,12 @@ class _UserProfileState extends State<UserProfile> {
                     onTap: () => _selectDate(context),
                   ),
                   const SizedBox(height: 16),
-
-                  // Location
-                  // TextFormField(
-                  //   controller: _locationController,
-                  //   decoration: InputDecoration(
-                  //     labelText: 'Location',
-                  //     border: OutlineInputBorder(
-                  //       borderRadius: BorderRadius.circular(8),
-                  //     ),
-                  //     prefixIcon: Icon(Icons.location_on_outlined),
-                  //   ),
-                  // ),
                 ],
               ),
             ),
           ),
-
-          // Action buttons
           Column(
             children: [
-              // Save Changes Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -549,7 +511,7 @@ class _UserProfileState extends State<UserProfile> {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
+                                  Colors.black,
                                 ),
                               ),
                             ),
@@ -567,8 +529,6 @@ class _UserProfileState extends State<UserProfile> {
                 ),
               ),
               SizedBox(height: 12),
-
-              // Logout Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

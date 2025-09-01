@@ -2,7 +2,6 @@ import 'package:salonDora/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:salonDora/services/booking_service.dart';
-// import 'package:salonDora/screens/payment_screen.dart';
 import 'package:salonDora/services/profile_service.dart';
 import 'package:salonDora/screens/current_booking.dart';
 
@@ -12,13 +11,13 @@ class BookingConfirmationScreen extends StatefulWidget {
   final String stylistId;
   final String stylistName;
   final List<Map<String, dynamic>> selectedServices;
-  final String service; // This should be a comma-separated string for display
+  final String service;
   final DateTime date;
   final TimeOfDay time;
-  final int totalDuration; // Total duration in minutes
-  final int totalPrice; // Total price in Rs
-  final String selectedEmployee; // Display name
-  final List<String> selectedTimeSlots; // Time slots for display
+  final int totalDuration;
+  final int totalPrice;
+  final String selectedEmployee;
+  final List<String> selectedTimeSlots;
 
   const BookingConfirmationScreen({
     super.key,
@@ -59,32 +58,25 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         _bookingError = null;
       });
 
-      // First, check if user has a phone number
       final profile = await ProfileService().getUserProfile();
       final customerData = profile['customer'] as Map<String, dynamic>?;
       final contactNumber = customerData?['contact_number'];
 
-      // If no phone number, show popup to get it
       if (contactNumber == null || contactNumber.toString().trim().isEmpty) {
         final phoneNumber = await _showPhoneNumberDialog();
         if (phoneNumber == null) {
-          // User cancelled the dialog
           setState(() {
             _isBooking = false;
           });
           return;
         }
-
-        // Update phone number
         await BookingService().updatePhone(phoneNumber);
       }
 
-      // Extract service IDs
       final serviceIds = widget.selectedServices
           .map((service) => service['service_id'].toString())
           .toList();
 
-      // Format the booking start datetime - keep in local timezone
       final bookingDateTime = DateTime(
         widget.date.year,
         widget.date.month,
@@ -93,10 +85,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         widget.time.minute,
       );
 
-      // Send as ISO string without UTC conversion
       final bookingStartDateTime = bookingDateTime.toIso8601String();
 
-      // Create the booking
       final result = await BookingService().createBooking(
         stylistId: widget.stylistId,
         serviceIds: serviceIds,
@@ -106,7 +96,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             : _notesController.text.trim(),
       );
 
-      // Show success and navigate to home
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -135,19 +124,20 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
     return showDialog<String>(
       context: context,
-      barrierDismissible: false, // User must enter phone number
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
               title: Text('Phone Number Required'),
+              backgroundColor: Colors.grey[200], // Ash background for dialog
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'We need your phone number to confirm your booking. This will be used for booking confirmations and updates.',
-                    style: TextStyle(fontSize: 14),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                   ),
                   SizedBox(height: 16),
                   TextField(
@@ -159,6 +149,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       border: OutlineInputBorder(),
                       errorText: phoneError,
                       prefixText: '+94 ',
+                      labelStyle: TextStyle(color: Colors.grey[700]),
+                      hintStyle: TextStyle(color: Colors.grey[500]),
                     ),
                     onChanged: (value) {
                       if (phoneError != null) {
@@ -173,9 +165,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(null); // User cancelled
+                    Navigator.of(context).pop(null);
                   },
-                  child: Text('Cancel'),
+                  child: Text('Cancel', style: TextStyle(color: Colors.grey[700])),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -186,12 +178,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       });
                       return;
                     }
-
-                    // Optionally, you can add more validation for the phone number format
-
                     Navigator.of(context).pop(phoneNumber);
                   },
                   child: Text('Submit'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey[600],
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             );
@@ -203,10 +196,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Parse selected services for display
     final List<String> selectedServices = widget.service.split(', ');
-
-    // Format date and time
     final formattedDate = DateFormat('EEEE, MMMM d, y').format(widget.date);
     final startTime =
         '${widget.time.hour}:${widget.time.minute.toString().padLeft(2, '0')}';
@@ -224,8 +214,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('Confirm Booking'),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          backgroundColor: Colors.grey[200], // Ash background for AppBar
+          foregroundColor: Colors.grey[800],
           elevation: 1,
         ),
         body: SingleChildScrollView(
@@ -233,37 +223,24 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Center(
-                // child: Text(
-                //   'VIVORA',
-                //   style: TextStyle(
-                //     fontSize: 32,
-                //     fontWeight: FontWeight.bold,
-                //     color: Colors.black,
-                //   ),
-                // ),
-              ),
-              SizedBox(height: 20),
-
-              // Confirmation Icon
-              Center(
-                child: Icon(Icons.calendar_today, color: Colors.blue, size: 64),
+                child: Icon(Icons.calendar_today, color: Colors.grey[700], size: 64),
               ),
               SizedBox(height: 16),
-
-              // Confirmation Text
               Center(
                 child: Text(
                   'Review Your Booking',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
                 ),
               ),
               SizedBox(height: 24),
-
-              // Salon Info Card
               Card(
                 elevation: 3,
+                color: Colors.grey[200], // Ash background for Card
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -290,12 +267,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
+                                    color: Colors.grey[800],
                                   ),
                                 ),
                                 SizedBox(height: 4),
                                 Text(
                                   'Colombo',
-                                  style: TextStyle(color: Colors.grey),
+                                  style: TextStyle(color: Colors.grey[600]),
                                 ),
                               ],
                             ),
@@ -303,13 +281,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         ],
                       ),
                       SizedBox(height: 16),
-
-                      // Services Section
                       Text(
                         'Services Booked:',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          color: Colors.grey[800],
                         ),
                       ),
                       SizedBox(height: 8),
@@ -322,12 +299,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               Expanded(
                                 child: Text(
                                   service['service_name'],
-                                  style: TextStyle(fontSize: 14),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[700],
+                                  ),
                                 ),
                               ),
                               Text(
                                 'Rs ${service['price']}',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[800],
+                                ),
                               ),
                             ],
                           ),
@@ -338,10 +321,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 ),
               ),
               SizedBox(height: 16),
-
-              // Booking Details Card
               Card(
                 elevation: 3,
+                color: Colors.grey[200], // Ash background for Card
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -352,31 +334,22 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          color: Colors.grey[800],
                         ),
                       ),
                       SizedBox(height: 16),
-
-                      // Stylist
                       _buildDetailRow('Stylist', widget.selectedEmployee),
                       SizedBox(height: 8),
-
-                      // Date
                       _buildDetailRow('Date', formattedDate),
                       SizedBox(height: 8),
-
-                      // Time Slot
                       _buildDetailRow(
                         'Time',
                         '$startTime - $endTime (${widget.totalDuration} mins)',
                       ),
                       SizedBox(height: 8),
-
-                      // Payment Method
                       _buildDetailRow('Payment Method', 'Pay at Salon'),
                       SizedBox(height: 16),
-
-                      // Total Price
-                      Divider(),
+                      Divider(color: Colors.grey[400]),
                       SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -386,6 +359,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
+                              color: Colors.grey[800],
                             ),
                           ),
                           Text(
@@ -403,10 +377,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 ),
               ),
               SizedBox(height: 16),
-
-              // Notes Section
               Card(
                 elevation: 3,
+                color: Colors.grey[200], // Ash background for Card
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -417,6 +390,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          color: Colors.grey[800],
                         ),
                       ),
                       SizedBox(height: 12),
@@ -430,40 +404,36 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           contentPadding: EdgeInsets.all(12),
+                          hintStyle: TextStyle(color: Colors.grey[500]),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-
-              // Error message
               if (_bookingError != null)
                 Container(
                   margin: EdgeInsets.only(top: 16),
                   padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red[50],
+                    color: Colors.grey[300], // Ash background for error
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red[200]!),
+                    border: Border.all(color: Colors.grey[400]!),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error, color: Colors.red),
+                      Icon(Icons.error, color: Colors.grey[700]),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _bookingError!,
-                          style: TextStyle(color: Colors.red[700]),
+                          style: TextStyle(color: Colors.grey[700]),
                         ),
                       ),
                     ],
                   ),
                 ),
-
               SizedBox(height: 24),
-
-              // Action Buttons
               Column(
                 children: [
                   SizedBox(
@@ -471,7 +441,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     child: ElevatedButton(
                       onPressed: _isBooking ? null : _confirmBooking,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
+                        backgroundColor: Colors.grey[700], // Ash button color
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -537,7 +507,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         Expanded(
           child: Text(
             value,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[800],
+            ),
             textAlign: TextAlign.end,
           ),
         ),

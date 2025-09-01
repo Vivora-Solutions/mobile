@@ -44,7 +44,6 @@ class _BookingScreenState extends State<BookingScreen> {
   List<Map<String, dynamic>> availableStylists = [];
   List<Map<String, dynamic>> availableTimeSlots = [];
 
-  // Calendar configuration
   CalendarFormat _calendarFormat = CalendarFormat.week;
   DateTime _focusedDay = DateTime.now();
 
@@ -164,7 +163,6 @@ class _BookingScreenState extends State<BookingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Salon Name
                 Center(
                   child: Text(
                     widget.salonName,
@@ -176,8 +174,6 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                 ),
                 SizedBox(height: 20),
-
-                // Selected Services Summary
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(16),
@@ -242,8 +238,6 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                 ),
                 SizedBox(height: 24),
-
-                // Step 1: Stylist Selection
                 Text(
                   'Step 1: Select Stylist',
                   style: GoogleFonts.playfairDisplay(
@@ -253,7 +247,6 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                 ),
                 SizedBox(height: 12),
-
                 if (isLoadingStylists)
                   Center(child: CircularProgressIndicator(color: Colors.black))
                 else if (stylistError != null)
@@ -320,10 +313,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       },
                     ),
                   ),
-
                 SizedBox(height: 24),
-
-                // Step 2: Date Selection
                 Text(
                   'Step 2: Select Date',
                   style: GoogleFonts.playfairDisplay(
@@ -333,7 +323,6 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                 ),
                 SizedBox(height: 12),
-
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -423,10 +412,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: 24),
-
-                // Step 3: Time Slots
                 Text(
                   'Step 3: Select Time Slot',
                   style: GoogleFonts.playfairDisplay(
@@ -436,7 +422,6 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                 ),
                 SizedBox(height: 12),
-
                 if (!_canLoadTimeSlots())
                   Container(
                     padding: EdgeInsets.all(16),
@@ -563,14 +548,14 @@ class _BookingScreenState extends State<BookingScreen> {
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isSelected
-                                      ? Colors.green[100]
+                                      ? Colors.grey[300]
                                       : Colors.grey[200],
                                   foregroundColor: Colors.black,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   side: isSelected
-                                      ? BorderSide(color: Colors.green[700]!, width: 2)
+                                      ? BorderSide(color: Colors.black, width: 2)
                                       : BorderSide(color: Colors.grey[300]!, width: 1),
                                   elevation: isSelected ? 5 : 2,
                                   padding: EdgeInsets.symmetric(horizontal: 16),
@@ -581,7 +566,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                     Icon(
                                       Icons.access_time,
                                       size: 22,
-                                      color: isSelected ? Colors.green[700] : Colors.grey[600],
+                                      color: isSelected ? Colors.black : Colors.grey[600],
                                     ),
                                     SizedBox(width: 12),
                                     Text(
@@ -589,7 +574,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                       style: GoogleFonts.roboto(
                                         fontSize: 16,
                                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                        color: isSelected ? Colors.green[700] : Colors.black87,
+                                        color: isSelected ? Colors.black : Colors.black87,
                                       ),
                                     ),
                                     if (isSelected) ...[
@@ -597,7 +582,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                       Icon(
                                         Icons.check_circle,
                                         size: 22,
-                                        color: Colors.green[700],
+                                        color: Colors.black,
                                       ),
                                     ],
                                   ],
@@ -609,10 +594,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       ),
                     ),
                   ),
-
                 SizedBox(height: 24),
-
-                // Confirm Button
                 Container(
                   decoration: BoxDecoration(
                     boxShadow: [
@@ -725,7 +707,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        elevation: 0, // Shadow handled by Container
+                        elevation: 0,
                       ),
                       child: Text(
                         selectedTimeSlot == null
@@ -740,7 +722,6 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: 24),
               ],
             ),

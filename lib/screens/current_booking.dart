@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:salonDora/screens/booking_history.dart';
 import 'package:salonDora/screens/home_screen.dart';
 import 'package:salonDora/screens/user_profile.dart';
-import 'package:salonDora/screens/auth/login_screen.dart'; // Add this import
-import 'package:salonDora/services/auth_service.dart'; // Add this import
+import 'package:salonDora/screens/auth/login_screen.dart';
+import 'package:salonDora/services/auth_service.dart';
 import 'package:intl/intl.dart';
 import 'package:salonDora/services/booking_service.dart';
 
@@ -16,12 +16,11 @@ class CurrentBooking extends StatefulWidget {
 
 class _CurrentBookingState extends State<CurrentBooking> {
   List<Map<String, dynamic>> bookings = [];
-  List<Map<String, dynamic>> filteredBookings =
-      []; // Add filtered bookings list
+  List<Map<String, dynamic>> filteredBookings = [];
   bool isLoading = true;
   String? errorMessage;
   bool isLoggedIn = false;
-  String selectedFilter = 'All'; // Add filter state
+  String selectedFilter = 'All';
 
   @override
   void initState() {
@@ -29,7 +28,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
     _checkAuthAndLoadBookings();
   }
 
-  // Check authentication first, then load bookings
   Future<void> _checkAuthAndLoadBookings() async {
     try {
       setState(() {
@@ -37,7 +35,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
         errorMessage = null;
       });
 
-      // Check if user is logged in
       final authStatus = await AuthService().isLoggedIn();
 
       if (!authStatus) {
@@ -52,7 +49,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
         isLoggedIn = true;
       });
 
-      // If logged in, load bookings
       await _loadBookings();
     } catch (e) {
       setState(() {
@@ -71,26 +67,21 @@ class _CurrentBookingState extends State<CurrentBooking> {
 
       final fetchedBookings = await BookingService().getUserBookings();
 
-      // Filter out past bookings and sort by most recent
       final now = DateTime.now();
       final currentBookings = fetchedBookings.where((booking) {
         try {
           final bookingDate = DateTime.parse(booking['booking_start_datetime']);
-          // Only show bookings that are today or in the future
-          return bookingDate.isAfter(
-            now.subtract(Duration(hours: 1)),
-          ); // 1 hour buffer for ongoing bookings
+          return bookingDate.isAfter(now.subtract(Duration(hours: 1)));
         } catch (e) {
-          return false; // Exclude bookings with invalid dates
+          return false;
         }
       }).toList();
 
-      // Sort by booking start datetime (most recent first)
       currentBookings.sort((a, b) {
         try {
           final dateA = DateTime.parse(a['booking_start_datetime']);
           final dateB = DateTime.parse(b['booking_start_datetime']);
-          return dateA.compareTo(dateB); // Earliest upcoming bookings first
+          return dateA.compareTo(dateB);
         } catch (e) {
           return 0;
         }
@@ -98,14 +89,12 @@ class _CurrentBookingState extends State<CurrentBooking> {
 
       setState(() {
         bookings = currentBookings;
-        filteredBookings = currentBookings; // Initialize filtered list
+        filteredBookings = currentBookings;
         isLoading = false;
       });
 
-      // Apply current filter
       _applyFilter(selectedFilter);
     } catch (e) {
-      // Check if it's an authentication error
       if (e.toString().contains('Authentication failed') ||
           e.toString().contains('Please login again')) {
         setState(() {
@@ -121,7 +110,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
     }
   }
 
-  // Add filter method
   void _applyFilter(String filter) {
     setState(() {
       selectedFilter = filter;
@@ -139,38 +127,31 @@ class _CurrentBookingState extends State<CurrentBooking> {
             return status == 'confirmed';
           }).toList();
           break;
-        default: // 'All'
+        default:
           filteredBookings = List.from(bookings);
           break;
       }
     });
   }
 
-  // Refresh method that checks auth status
   Future<void> _refreshBookings() async {
     await _checkAuthAndLoadBookings();
   }
 
-  // Navigate to login screen
   void _navigateToLogin() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => LoginScreen(fromBooking: false)),
     ).then((_) {
-      // Refresh when user comes back from login
       _checkAuthAndLoadBookings();
     });
   }
 
-  // ...existing methods remain the same...
-
-  // Check if booking can be cancelled based on business rules
   bool _canCancelBooking(Map<String, dynamic> booking) {
     try {
       final status = booking['status']?.toString().toLowerCase() ?? '';
       final startDateTime = booking['booking_start_datetime'];
 
-      // Only allow cancellation for pending or confirmed bookings
       if (!['pending', 'confirmed'].contains(status)) {
         return false;
       }
@@ -179,8 +160,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
         final startTime = DateTime.parse(startDateTime);
         final now = DateTime.now();
         final hoursUntilBooking = startTime.difference(now).inHours;
-
-        // Must be at least 2 hours before booking time
         return hoursUntilBooking >= 2;
       }
 
@@ -190,7 +169,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
     }
   }
 
-  // Get cancellation message based on booking details
   String _getCancellationMessage(Map<String, dynamic> booking) {
     try {
       final status = booking['status']?.toString().toLowerCase() ?? '';
@@ -218,7 +196,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
 
   Future<void> _cancelBooking(String bookingId, int index) async {
     try {
-      // Show loading indicator
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -226,7 +203,9 @@ class _CurrentBookingState extends State<CurrentBooking> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+              ),
               SizedBox(height: 16),
               Text(
                 'Cancelling booking...',
@@ -239,10 +218,8 @@ class _CurrentBookingState extends State<CurrentBooking> {
 
       final result = await BookingService().cancelBooking(bookingId);
 
-      // Close loading dialog
       Navigator.of(context).pop();
 
-      // Remove from both lists
       final bookingToRemove = filteredBookings[index];
       setState(() {
         bookings.removeWhere((booking) => booking['booking_id'] == bookingId);
@@ -257,7 +234,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
         ),
       );
     } catch (e) {
-      // Close loading dialog
       Navigator.of(context).pop();
 
       String errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -278,7 +254,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
   }
 
   void _showCancelConfirmation(String bookingId, int index) {
-    final booking = filteredBookings[index]; // Use filtered bookings
+    final booking = filteredBookings[index];
     final canCancel = _canCancelBooking(booking);
     final message = _getCancellationMessage(booking);
     final salon = booking['salon'] as Map<String, dynamic>?;
@@ -304,7 +280,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Booking details
                 Container(
                   padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -358,7 +333,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop();
               },
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
@@ -378,7 +353,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
             if (canCancel)
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop();
                   _cancelBooking(bookingId, index);
                 },
                 style: TextButton.styleFrom(
@@ -404,7 +379,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
     );
   }
 
-  // Helper method to get human-readable time until booking
   String? _getTimeUntilBooking(Map<String, dynamic> booking) {
     try {
       final startDateTime = booking['booking_start_datetime'];
@@ -501,7 +475,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Filter chips - only show if logged in and have bookings
             if (isLoggedIn && bookings.isNotEmpty)
               Container(
                 margin: EdgeInsets.only(bottom: 16),
@@ -523,7 +496,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
                           '${filteredBookings.length} booking${filteredBookings.length != 1 ? 's' : ''}',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: Colors.black,
                           ),
                         ),
                       ],
@@ -535,7 +508,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
                         children: ['All', 'Pending', 'Confirmed'].map((filter) {
                           final isSelected = selectedFilter == filter;
 
-                          // Count bookings for each filter
                           int count = 0;
                           switch (filter) {
                             case 'Pending':
@@ -590,21 +562,21 @@ class _CurrentBookingState extends State<CurrentBooking> {
                   ],
                 ),
               ),
-
-            // Loading, Error, Login Required, or Content
             Expanded(
               child: isLoading
-                  ? Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                      ),
+                    )
                   : !isLoggedIn
-                  ? _buildLoginRequiredWidget()
-                  : errorMessage != null
-                  ? _buildErrorWidget()
-                  : filteredBookings.isEmpty
-                  ? _buildEmptyWidget()
-                  : _buildBookingsList(),
+                      ? _buildLoginRequiredWidget()
+                      : errorMessage != null
+                          ? _buildErrorWidget()
+                          : filteredBookings.isEmpty
+                              ? _buildEmptyWidget()
+                              : _buildBookingsList(),
             ),
-
-            // View Booking History Button - only show if logged in
             if (isLoggedIn)
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -663,7 +635,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
               );
               break;
             case 1:
-              // Stay on current page
               break;
             case 2:
               Navigator.pushReplacement(
@@ -677,7 +648,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
     );
   }
 
-  // New widget for when user is not logged in
   Widget _buildLoginRequiredWidget() {
     return Center(
       child: Column(
@@ -748,13 +718,15 @@ class _CurrentBookingState extends State<CurrentBooking> {
             style: TextStyle(color: Colors.grey[600]),
           ),
           SizedBox(height: 16),
-          ElevatedButton(onPressed: _loadBookings, child: Text('Retry')),
+          ElevatedButton(
+            onPressed: _loadBookings,
+            child: Text('Retry'),
+          ),
         ],
       ),
     );
   }
 
-  // Update empty widget to show different messages based on filter
   Widget _buildEmptyWidget() {
     String message;
     String description;
@@ -795,7 +767,16 @@ class _CurrentBookingState extends State<CurrentBooking> {
               padding: const EdgeInsets.only(top: 8),
               child: TextButton(
                 onPressed: () => _applyFilter('All'),
-                child: Text('View All Bookings'),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.blue[100], // Light blue background
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'View All Bookings',
+                  style: TextStyle(color: Colors.blue[800]),
+                ),
               ),
             ),
           SizedBox(height: 16),
@@ -816,9 +797,9 @@ class _CurrentBookingState extends State<CurrentBooking> {
 
   Widget _buildBookingsList() {
     return ListView.builder(
-      itemCount: filteredBookings.length, // Use filtered bookings
+      itemCount: filteredBookings.length,
       itemBuilder: (context, index) {
-        final booking = filteredBookings[index]; // Use filtered bookings
+        final booking = filteredBookings[index];
         final salon = booking['salon'] as Map<String, dynamic>?;
         final stylist = booking['stylist'] as Map<String, dynamic>?;
         final canCancel = _canCancelBooking(booking);
@@ -831,7 +812,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Row with Salon Info and Price
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -917,8 +897,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // Date and Time
                 Text(
                   _formatDate(booking['booking_start_datetime'] ?? ''),
                   style: const TextStyle(
@@ -935,8 +913,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
                   ),
                   style: const TextStyle(fontSize: 14, color: Colors.black),
                 ),
-
-                // Duration
                 if (booking['total_duration_minutes'] != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
@@ -948,8 +924,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
                       ),
                     ),
                   ),
-
-                // Time until booking (if within 24 hours)
                 if (_getTimeUntilBooking(booking) != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
@@ -971,8 +945,6 @@ class _CurrentBookingState extends State<CurrentBooking> {
                       ),
                     ),
                   ),
-
-                // Notes if available
                 if (booking['notes'] != null &&
                     booking['notes'].toString().isNotEmpty)
                   Padding(
@@ -1000,18 +972,14 @@ class _CurrentBookingState extends State<CurrentBooking> {
                       ),
                     ),
                   ),
-
                 const SizedBox(height: 16),
-
-                // Action Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Visibility(
-                      visible: false, // Hide reschedule button for now
+                      visible: false,
                       child: ElevatedButton(
                         onPressed: () {
-                          // TODO: Implement reschedule functionality
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Reschedule feature coming soon!'),
